@@ -1,6 +1,8 @@
 # Faveworm Oscilloscope
 
-Analog oscilloscope waveform visualization inspired by [faveworm](https://music.metaservices.microsoft.com/faveworm/) by Laurent de Soras. Features physics-based beam rendering where brightness is inversely proportional to movement speed, phosphor persistence, and a 360° SVF filter for XY mode visualization.
+Analog oscilloscope waveform visualization inspired by [faveworm](https://ldesoras.fr/prod.html#src_vs) by Laurent de Soras and [oscilloscopemusic.com](https://oscilloscopemusic.com). Features physics-based beam rendering where brightness is inversely proportional to movement speed, phosphor persistence, and a 360° SVF filter for XY mode visualization.
+
+![XY Mode Visualization](images/screenshot.png)
 
 ## Display Modes
 
