@@ -38,7 +38,7 @@ Analog oscilloscope waveform visualization inspired by [faveworm](https://ldesor
 | `D` | Cycle split mode presets |
 | `Left/Right` | Adjust filter cutoff frequency |
 
-### Split Mode Presets
+<!-- ### Split Mode Presets
 
 In stereo split mode, a mono source is routed through an SVF, with different filter outputs sent to X and Y axes. This creates phase relationships that produce rotating, evolving Lissajous patterns.
 
@@ -50,7 +50,7 @@ In stereo split mode, a mono source is routed through an SVF, with different fil
 | LP/BP Organic | LP | BP | fc 100-200, Q 0.8 | Soft loops and petals |
 | AP/HP Liquid | AP | HP | fc 20-40, Q 0.5 | Liquid vector graphics |
 | BP/BR Complement | BP | BR | fc 200-500, Q 0.9 | Complementary bands |
-| In/Morph Live | Input | Filtered | varies | X stable, Y evolves (use joystick) |
+| In/Morph Live | Input | Filtered | varies | X stable, Y evolves (use joystick) | -->
 
 ### Test Signal Generator (XY Mode)
 | Key | Action |
@@ -101,7 +101,7 @@ Supported formats:
 | Psychedelic | 300-800 Hz | 1.2-1.8 | BR ↔ BP | Tight spirals, starburst |
 | Liquid vector | 20-40 Hz | 0.5-0.7 | AP + slight HP | Soft, organic shapes |
 
-## File Structure
+<!-- ## File Structure
 
 ```
 Faveworm/
@@ -115,7 +115,7 @@ Faveworm/
     ├── dfl_FilterBase.h
     ├── dfl_FastMath.h
     └── ...
-```
+``` -->
 
 ## Building
 
