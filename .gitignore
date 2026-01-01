@@ -1,0 +1,22 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.xcodeproj/
+*.xcworkspace/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.o
+*.a
+*.lib
+*.dylib
+*.so
+*.dll
