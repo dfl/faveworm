@@ -1718,7 +1718,7 @@ public:
 #if VISAGE_EMSCRIPTEN
     setVolume(0.0f);
 #else
-    onCloseRequest() = [this] {
+    onCloseRequested() = [this] {
       if (shutting_down_)
         return true;
 
