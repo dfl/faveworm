@@ -6,8 +6,8 @@
 
 A love letter to the analog oscilloscopes of yore, transforming audio into liquid light. Inspired by the legendary work at [oscilloscopemusic.com](https://oscilloscopemusic.com).
 
-## Demo
-
+## Demo Video
+(click to watch on YouTube)
 [![Watch the demo](https://img.youtube.com/vi/yX30gl02Jhc/0.jpg)](https://www.youtube.com/watch?v=yX30gl02Jhc)
 
 ## Installation
