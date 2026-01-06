@@ -50,7 +50,7 @@ jobs:
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install pkg-config
+        run: brew install portaudio pkg-config
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
