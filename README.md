@@ -1,6 +1,6 @@
 # Faveworm Oscilloscope
 
-A love letter to the analog oscilloscopes of yore. Inspired by the legendary work at [oscilloscopemusic.com](https://oscilloscopemusic.com), this project transforms audio into liquid light.
+A love letter to the analog oscilloscopes of yore, trasnforming audio into liquid light. Inspired by the legendary work at [oscilloscopemusic.com](https://oscilloscopemusic.com).
 
 Built on the shoulders of giants with [Visage](https://github.com/VitalAudio/visage), Faveworm features a custom physics-based beam renderer raided from [Laurent de Soras' faveworm rendering plugin for Vapoursynth](https://ldesoras.fr/prod.html#src_vs).
 
