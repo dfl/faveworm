@@ -30,23 +30,33 @@ if (NOT EMSCRIPTEN)
   find_package(portaudio CONFIG QUIET)
   if (portaudio_FOUND)
     set(PORTAUDIO_TARGET portaudio)
+
   else()
     find_package(PortAudio QUIET)
     if (PortAudio_FOUND)
       set(PORTAUDIO_TARGET PortAudio::PortAudio)
+
     else()
       find_package(PkgConfig REQUIRED)
       pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
 
       if (APPLE)
+        # Library
         find_library(PORTAUDIO_LIB portaudio REQUIRED)
+        # Headers
+        find_path(PORTAUDIO_INCLUDE_DIR portaudio.h REQUIRED)
+
         set(PORTAUDIO_TARGET ${PORTAUDIO_LIB})
+        set(PORTAUDIO_INCLUDES ${PORTAUDIO_INCLUDE_DIR})
+
       else()
         set(PORTAUDIO_TARGET ${PORTAUDIO_LDFLAGS})
+        set(PORTAUDIO_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
       endif()
     endif()
   endif()
 endif()
+
 
 # =========================
 # Embed shaders
@@ -151,6 +161,7 @@ target_link_libraries(Faveworm PRIVATE
 # =========================
 if (NOT EMSCRIPTEN)
   target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_TARGET})
+  target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDES})
 
   if (APPLE)
     target_link_libraries(Faveworm PRIVATE
