@@ -32,6 +32,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/_deps
+            ~/.vcpkg
+          key: ${{ matrix.name }}-deps-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ matrix.name }}-deps-
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
