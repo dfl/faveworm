@@ -50,14 +50,19 @@ jobs:
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install portaudio pkg-config
+        run: brew install pkg-config
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
         env:
           PKG_CONFIG_PATH: ${{ runner.os == 'macOS' && '/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig' || '' }}
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            vcpkg install portaudio
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          else
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+          fi
           cmake --build build --config Release --parallel
 
       - name: Build (Windows)
@@ -92,8 +97,42 @@ jobs:
           name: faveworm-${{ matrix.name }}
           path: faveworm-${{ matrix.name }}.*
 
-  release:
+  macos-universal:
     needs: build
+    runs-on: macos-latest
+    steps:
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: faveworm-macos-arm64
+          path: macos-arm64
+
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: faveworm-macos-x86_64
+          path: macos-x86_64
+
+      - name: Create Universal Binary
+        run: |
+          unzip macos-arm64/faveworm-macos-arm64.zip -d arm64_unzipped
+          unzip macos-x86_64/faveworm-macos-x86_64.zip -d x64_unzipped
+          mkdir -p universal
+          cp -R arm64_unzipped/Faveworm.app universal/
+          lipo -create arm64_unzipped/Faveworm.app/Contents/MacOS/Faveworm \
+                       x64_unzipped/Faveworm.app/Contents/MacOS/Faveworm \
+               -output universal/Faveworm.app/Contents/MacOS/Faveworm
+          cd universal
+          zip -r ../faveworm-macos-universal.zip Faveworm.app
+
+      - name: Upload Universal Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: faveworm-macos-universal
+          path: faveworm-macos-universal.zip
+
+  release:
+    needs: [build, macos-universal]
     runs-on: ubuntu-latest
     permissions:
       contents: write

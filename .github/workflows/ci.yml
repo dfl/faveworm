@@ -43,14 +43,19 @@ jobs:
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
-        run: brew install portaudio pkg-config
+        run: brew install pkg-config
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
         env:
           PKG_CONFIG_PATH: ${{ runner.os == 'macOS' && '/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig' || '' }}
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            vcpkg install portaudio
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          else
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+          fi
           cmake --build build --config Release --parallel
 
       - name: Build (Windows)
