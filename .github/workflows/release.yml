@@ -58,8 +58,7 @@ jobs:
           PKG_CONFIG_PATH: ${{ runner.os == 'macOS' && '/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig' || '' }}
         run: |
           if [ "${{ runner.os }}" == "macOS" ]; then
-            vcpkg install portaudio
-            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
           else
             cmake -B build -DCMAKE_BUILD_TYPE=Release
           fi

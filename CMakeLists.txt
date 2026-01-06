@@ -53,14 +53,6 @@ if (NOT EMSCRIPTEN)
       endif()
     endif()
   endif()
-
-  # Ensure includes are found if not set by pkg-config or config
-  if (NOT PORTAUDIO_INCLUDES)
-    find_path(PORTAUDIO_INCLUDE_DIR portaudio.h)
-    if (PORTAUDIO_INCLUDE_DIR)
-      set(PORTAUDIO_INCLUDES ${PORTAUDIO_INCLUDE_DIR})
-    endif()
-  endif()
 endif()
 
 
