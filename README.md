@@ -1,6 +1,6 @@
 # Faveworm Oscilloscope
 
-Analog oscilloscope waveform visualization inspired by [faveworm](https://ldesoras.fr/prod.html#src_vs) by Laurent de Soras and [oscilloscopemusic.com](https://oscilloscopemusic.com). Features physics-based beam rendering where brightness is inversely proportional to movement speed, phosphor persistence, and a 360° SVF filter for XY mode visualization.
+Analog oscilloscope waveform visualization inspired by [faveworm](https://github.com/dfl/faveworm) by Laurent de Soras (originally) and [oscilloscopemusic.com](https://oscilloscopemusic.com). Built with [Visage](https://github.com/VitalAudio/visage). Features physics-based beam rendering where brightness is inversely proportional to movement speed, phosphor persistence, and a 360° SVF filter for XY mode visualization.
 
 ![XY Mode Visualization](images/screenshot.png)
 
@@ -120,11 +120,11 @@ Faveworm/
 ## Building
 
 ```bash
-cd /path/to/visage/build
-cmake --build . --target ExampleFaveworm
+cd ./build
+cmake --build . --target Faveworm
 ```
 
 On macOS, the app bundle will be at:
 ```
-build/examples/ExampleFaveworm.app
+build/examples/Faveworm.app
 ```

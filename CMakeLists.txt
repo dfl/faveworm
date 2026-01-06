@@ -13,9 +13,8 @@ include(FetchContent)
 
 # Fetch visage GUI library
 FetchContent_Declare(visage
-  GIT_REPOSITORY https://github.com/dfl/visage.git
-  GIT_TAG faveworm
-  GIT_SHALLOW TRUE
+  GIT_REPOSITORY https://github.com/VitalAudio/visage
+  GIT_TAG main
 )
 
 set(VISAGE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -24,24 +23,37 @@ FetchContent_MakeAvailable(visage)
 
 # Find PortAudio for audio playback
 if (NOT EMSCRIPTEN)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
+  find_package(PortAudio QUIET)
+  if (PortAudio_FOUND)
+    set(PORTAUDIO_LIBRARIES PortAudio::PortAudio)
+  else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
+  endif()
 endif ()
 
 # Embed shaders
 file(GLOB_RECURSE SHADERS resources/shaders/[vf]s_*.sc)
 add_compile_definitions(SHADERS_FOLDER="${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders")
-visage_embed_shaders(EmbeddedShaders "example_shaders.h" "resources::shaders" "${SHADERS}")
+visage_embed_shaders(EmbeddedShaders "faveworm_shaders.h" "resources::shaders" "${SHADERS}")
 
 # Embed fonts
 file(GLOB_RECURSE FONTS resources/fonts/*.ttf)
-add_embedded_resources(EmbeddedFonts "example_fonts.h" "resources::fonts" "${FONTS}")
+add_embedded_resources(EmbeddedFonts "faveworm_fonts.h" "resources::fonts" "${FONTS}")
 
 # Source files
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 
-add_executable(Faveworm ${SOURCE_FILES} ${HEADER_FILES})
+# Icons
+set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/faveworm.icns")
+set(APP_ICON_WIN "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/faveworm.ico")
+
+if (APPLE)
+  set_source_files_properties(${APP_ICON_MACOS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+endif()
+
+add_executable(Faveworm ${SOURCE_FILES} ${HEADER_FILES} ${APP_ICON_MACOS} ${APP_ICON_WIN})
 
 target_include_directories(Faveworm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
@@ -51,6 +63,7 @@ elseif (APPLE)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   set_target_properties(Faveworm PROPERTIES
     MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_ICON_FILE "faveworm.icns"
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
   )
 elseif (EMSCRIPTEN)

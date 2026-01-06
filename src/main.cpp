@@ -19,15 +19,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-int runExample();
+int runFaveworm();
 
 #if VISAGE_WINDOWS
 #include <windows.h>
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
-  return runExample();
+  return runFaveworm();
 }
 #else
-int main(int, char**) {
-  return runExample();
-}
+int main(int, char **) { return runFaveworm(); }
 #endif

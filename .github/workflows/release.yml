@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+            name: macos-arm64
+          - os: macos-13
+            arch: x86_64
+            name: macos-x86_64
+          - os: ubuntu-latest
+            arch: x86_64
+            name: linux-x86_64
+          - os: windows-latest
+            arch: x86_64
+            name: windows-x86_64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libwebkit2gtk-4.1-dev portaudio19-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install portaudio
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --parallel
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install portaudio
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          cmake --build build --config Release --parallel
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd build
+          zip -r ../faveworm-${{ matrix.name }}.zip Faveworm.app
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd build
+          tar czf ../faveworm-${{ matrix.name }}.tar.gz Faveworm
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd build
+          7z a ../faveworm-${{ matrix.name }}.zip Release/Faveworm.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: faveworm-${{ matrix.name }}
+          path: faveworm-${{ matrix.name }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}

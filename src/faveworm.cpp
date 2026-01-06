@@ -1,6 +1,6 @@
 /* Faveworm - Audio Oscilloscope
  *
- * Written by David Lowenfels
+ * Written by David Lowenfels 12/2025
  * Based on code from Laurent de Soras
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -22,11 +22,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "embedded/example_fonts.h"
-#include "embedded/example_shaders.h"
 #include "FilterJoystick.h"
 #include "FilterMorpher.h"
 #include "TestSignalGenerator.h"
+#include "embedded/faveworm_fonts.h"
+#include "embedded/faveworm_shaders.h"
 
 #include <algorithm>
 #include <atomic>
@@ -46,7 +46,8 @@
 static constexpr float kMinFilterCutoff = 20.0f;
 static constexpr float kMaxFilterCutoff = 3000.0f;
 static constexpr float kMinFilterResonance = 0.0f;
-static constexpr float kMaxFilterResonance = 1.0f;  // Note: UI limits to 0.99f for safety
+static constexpr float kMaxFilterResonance =
+    1.0f; // Note: UI limits to 0.99f for safety
 static constexpr float kMinSplitAngle = -180.0f;
 static constexpr float kMaxSplitAngle = 180.0f;
 static constexpr float kMinSplitDepth = 0.0f;
@@ -77,8 +78,10 @@ static constexpr float kDefaultSplitDepth = 0.0f;
 static constexpr float kDefaultPostScale = 1.0f;
 static constexpr float kDefaultPostRotate = 0.0f;
 static constexpr float kDefaultTriggerThreshold = 0.0f;
-static constexpr float kDefaultCrtIntensity = 0.0f;  // CRT effect intensity (0 = off, 1 = full)
-static constexpr float kDefaultSlew = 0.0f;  // XY slew filter (0 = no filtering, 1 = max smoothing)
+static constexpr float kDefaultCrtIntensity =
+    0.0f; // CRT effect intensity (0 = off, 1 = full)
+static constexpr float kDefaultSlew =
+    0.0f; // XY slew filter (0 = no filtering, 1 = max smoothing)
 
 // Rendering step multiplier (1.0 = base, higher = coarser/faster rendering)
 static constexpr float kDefaultStepMult = 1.0f;
@@ -95,10 +98,10 @@ public:
     // Configure fade animation
     fade_animation_.setSourceValue(0.0f);
     fade_animation_.setTargetValue(1.0f);
-    fade_animation_.setAnimationTime(150);  // 150ms smooth fade
+    fade_animation_.setAnimationTime(150); // 150ms smooth fade
   }
 
-  void draw(visage::Canvas& canvas) override {
+  void draw(visage::Canvas &canvas) override {
     // Update animation and get current opacity
     float opacity = fade_animation_.update();
 
@@ -127,23 +130,25 @@ public:
 
     // All text elements fade with opacity
     canvas.setColor(visage::Color(opacity, 0.4f, 1.0f, 0.9f));
-    canvas.text("Faveworm Help", title_font, visage::Font::kTopLeft, col1, y, w - 60, 30);
+    canvas.text("Faveworm Help", title_font, visage::Font::kTopLeft, col1, y,
+                w - 60, 30);
     y += 40;
 
     canvas.setColor(visage::Color(opacity * 0.9f, 0.8f, 0.9f, 0.95f));
 
-    auto drawSection = [&](const char* title) {
+    auto drawSection = [&](const char *title) {
       canvas.setColor(visage::Color(opacity, 0.5f, 0.9f, 0.8f));
       canvas.text(title, font, visage::Font::kTopLeft, col1, y, w - 60, line_h);
       y += line_h + 5;
       canvas.setColor(visage::Color(opacity * 0.9f, 0.8f, 0.9f, 0.95f));
     };
 
-    auto drawKey = [&](const char* key, const char* desc) {
+    auto drawKey = [&](const char *key, const char *desc) {
       canvas.setColor(visage::Color(opacity, 0.6f, 1.0f, 0.7f));
       canvas.text(key, font, visage::Font::kTopLeft, col1, y, 90, line_h);
       canvas.setColor(visage::Color(opacity * 0.9f, 0.8f, 0.9f, 0.95f));
-      canvas.text(desc, font, visage::Font::kTopLeft, col2, y, w - col2 - 30, line_h);
+      canvas.text(desc, font, visage::Font::kTopLeft, col2, y, w - col2 - 30,
+                  line_h);
       y += line_h;
     };
 
@@ -170,15 +175,16 @@ public:
     y += 15;
 
     canvas.setColor(visage::Color(opacity * 0.6f, 0.5f, 0.6f, 0.6f));
-    canvas.text("Drag audio file to load", font, visage::Font::kTopLeft, col1, y, w - 60, line_h);
+    canvas.text("Drag audio file to load", font, visage::Font::kTopLeft, col1,
+                y, w - 60, line_h);
 
     // Keep redrawing while animation is active
     if (fade_animation_.isAnimating())
       redraw();
   }
 
-  void mouseDown(const visage::MouseEvent&) override {
-    toggle();  // Use toggle to trigger fade-out animation
+  void mouseDown(const visage::MouseEvent &) override {
+    toggle(); // Use toggle to trigger fade-out animation
   }
 
   void setVisible(bool v) {
@@ -188,8 +194,7 @@ public:
       setIgnoresMouseEvents(false, false);
       fade_animation_.target(true);
       redraw();
-    }
-    else if (!v && visible_) {
+    } else if (!v && visible_) {
       // Fade out (actual hiding happens in draw when opacity reaches 0)
       fade_animation_.target(false);
       redraw();
@@ -209,7 +214,7 @@ private:
 // Vintage control panel background
 class ControlPanel : public visage::ScrollableFrame {
 public:
-  void draw(visage::Canvas& canvas) override {
+  void draw(visage::Canvas &canvas) override {
     const float w = static_cast<float>(width());
     const float h = static_cast<float>(height());
 
@@ -234,9 +239,11 @@ public:
 // Section frame with a subtle border and title for modular hardware look
 class SectionFrame : public visage::Frame {
 public:
-  SectionFrame(const std::string& title) : title_(title) { setIgnoresMouseEvents(true, true); }
+  SectionFrame(const std::string &title) : title_(title) {
+    setIgnoresMouseEvents(true, true);
+  }
 
-  void draw(visage::Canvas& canvas) override {
+  void draw(visage::Canvas &canvas) override {
     const float w = static_cast<float>(width());
     const float h = static_cast<float>(height());
 
@@ -253,7 +260,8 @@ public:
     visage::Font font(10, resources::fonts::Lato_Regular_ttf, dpiScale());
     visage::String title_str(title_);
     float text_w = font.stringWidth(title_str.c_str(), title_str.length());
-    canvas.setColor(visage::Color(0.95f, 0.06f, 0.07f, 0.08f));  // Match panel bg
+    canvas.setColor(
+        visage::Color(0.95f, 0.06f, 0.07f, 0.08f)); // Match panel bg
     canvas.fill(12, 2, text_w + 8, 5);
 
     // Title text
@@ -280,9 +288,9 @@ static PortAudioRAII pa_raii;
 
 // Display modes
 enum class DisplayMode {
-  TimeFree,  // Horizontal sweep, free running
-  TimeTrigger,  // Horizontal sweep with trigger and waveform locking
-  XY  // X-Y mode (Lissajous)
+  TimeFree,    // Horizontal sweep, free running
+  TimeTrigger, // Horizontal sweep with trigger and waveform locking
+  XY           // X-Y mode (Lissajous)
 };
 
 // Simple WAV file loader
@@ -292,15 +300,17 @@ struct AudioData {
   int sample_rate = 44100;
   bool stereo = false;
 
-  bool load(const std::string& path) {
+  bool load(const std::string &path) {
     if (loadWavInternal(path))
       return true;
 
 #if !VISAGE_EMSCRIPTEN && defined(__APPLE__)
     // Try converting with afconvert
     std::srand(std::time(nullptr));
-    std::string temp_path = "/tmp/faveworm_temp_" + std::to_string(std::rand()) + ".wav";
-    std::string cmd = "afconvert -f WAVE -d LEF32 \"" + path + "\" \"" + temp_path + "\"";
+    std::string temp_path =
+        "/tmp/faveworm_temp_" + std::to_string(std::rand()) + ".wav";
+    std::string cmd =
+        "afconvert -f WAVE -d LEF32 \"" + path + "\" \"" + temp_path + "\"";
     if (std::system(cmd.c_str()) == 0) {
       bool success = loadWavInternal(temp_path);
       std::remove(temp_path.c_str());
@@ -310,7 +320,7 @@ struct AudioData {
     return false;
   }
 
-  bool loadWavInternal(const std::string& path) {
+  bool loadWavInternal(const std::string &path) {
     std::ifstream file(path, std::ios::binary);
     if (!file)
       return false;
@@ -321,7 +331,7 @@ struct AudioData {
       return false;
 
     uint32_t file_size;
-    file.read(reinterpret_cast<char*>(&file_size), 4);
+    file.read(reinterpret_cast<char *>(&file_size), 4);
 
     char wave[4];
     file.read(wave, 4);
@@ -335,19 +345,18 @@ struct AudioData {
       char chunk_id[4];
       uint32_t chunk_size;
       file.read(chunk_id, 4);
-      file.read(reinterpret_cast<char*>(&chunk_size), 4);
+      file.read(reinterpret_cast<char *>(&chunk_size), 4);
 
       if (std::string(chunk_id, 4) == "fmt ") {
-        file.read(reinterpret_cast<char*>(&audio_format), 2);
-        file.read(reinterpret_cast<char*>(&num_channels), 2);
-        file.read(reinterpret_cast<char*>(&sample_rate), 4);
-        file.read(reinterpret_cast<char*>(&byte_rate), 4);
-        file.read(reinterpret_cast<char*>(&block_align), 2);
-        file.read(reinterpret_cast<char*>(&bits_per_sample), 2);
+        file.read(reinterpret_cast<char *>(&audio_format), 2);
+        file.read(reinterpret_cast<char *>(&num_channels), 2);
+        file.read(reinterpret_cast<char *>(&sample_rate), 4);
+        file.read(reinterpret_cast<char *>(&byte_rate), 4);
+        file.read(reinterpret_cast<char *>(&block_align), 2);
+        file.read(reinterpret_cast<char *>(&bits_per_sample), 2);
         if (chunk_size > 16)
           file.seekg(chunk_size - 16, std::ios::cur);
-      }
-      else if (std::string(chunk_id, 4) == "data") {
+      } else if (std::string(chunk_id, 4) == "data") {
         stereo = (num_channels == 2);
         int num_samples = chunk_size / (bits_per_sample / 8) / num_channels;
         left.resize(num_samples);
@@ -357,48 +366,45 @@ struct AudioData {
         for (int i = 0; i < num_samples; ++i) {
           if (bits_per_sample == 16) {
             int16_t sample;
-            file.read(reinterpret_cast<char*>(&sample), 2);
+            file.read(reinterpret_cast<char *>(&sample), 2);
             left[i] = sample / 32768.0f;
             if (stereo) {
-              file.read(reinterpret_cast<char*>(&sample), 2);
+              file.read(reinterpret_cast<char *>(&sample), 2);
               right[i] = sample / 32768.0f;
             }
-          }
-          else if (bits_per_sample == 24) {
+          } else if (bits_per_sample == 24) {
             uint8_t bytes[3];
-            file.read(reinterpret_cast<char*>(bytes), 3);
-            int32_t sample = (bytes[2] << 24) | (bytes[1] << 16) | (bytes[0] << 8);
+            file.read(reinterpret_cast<char *>(bytes), 3);
+            int32_t sample =
+                (bytes[2] << 24) | (bytes[1] << 16) | (bytes[0] << 8);
             left[i] = sample / 2147483648.0f;
             if (stereo) {
-              file.read(reinterpret_cast<char*>(bytes), 3);
+              file.read(reinterpret_cast<char *>(bytes), 3);
               sample = (bytes[2] << 24) | (bytes[1] << 16) | (bytes[0] << 8);
               right[i] = sample / 2147483648.0f;
             }
-          }
-          else if (bits_per_sample == 32) {
+          } else if (bits_per_sample == 32) {
             if (audio_format == 3) {
               float sample;
-              file.read(reinterpret_cast<char*>(&sample), 4);
+              file.read(reinterpret_cast<char *>(&sample), 4);
               left[i] = sample;
               if (stereo) {
-                file.read(reinterpret_cast<char*>(&sample), 4);
+                file.read(reinterpret_cast<char *>(&sample), 4);
                 right[i] = sample;
               }
-            }
-            else {
+            } else {
               int32_t sample;
-              file.read(reinterpret_cast<char*>(&sample), 4);
+              file.read(reinterpret_cast<char *>(&sample), 4);
               left[i] = sample / 2147483648.0f;
               if (stereo) {
-                file.read(reinterpret_cast<char*>(&sample), 4);
+                file.read(reinterpret_cast<char *>(&sample), 4);
                 right[i] = sample / 2147483648.0f;
               }
             }
           }
         }
         break;
-      }
-      else {
+      } else {
         file.seekg(chunk_size, std::ios::cur);
       }
     }
@@ -415,7 +421,7 @@ struct AudioData {
 // Ring buffer for visualization and trigger detection
 class RingBuffer {
 public:
-  static constexpr size_t kSize = 16384;  // Must be power of 2
+  static constexpr size_t kSize = 16384; // Must be power of 2
 
   void write(float left, float right) {
     size_t pos = write_pos_.load(std::memory_order_relaxed);
@@ -424,12 +430,15 @@ public:
     write_pos_.store(pos + 1, std::memory_order_release);
   }
 
-  void read(std::vector<float>& left, std::vector<float>& right, int num_samples, int offset = 0) {
+  void read(std::vector<float> &left, std::vector<float> &right,
+            int num_samples, int offset = 0) {
     size_t pos = write_pos_.load(std::memory_order_acquire);
     left.resize(num_samples);
     right.resize(num_samples);
 
-    size_t start = (pos >= static_cast<size_t>(num_samples + offset)) ? pos - num_samples - offset : 0;
+    size_t start = (pos >= static_cast<size_t>(num_samples + offset))
+                       ? pos - num_samples - offset
+                       : 0;
     for (int i = 0; i < num_samples; ++i) {
       size_t idx = (start + i) & (kSize - 1);
       left[i] = left_[idx];
@@ -456,15 +465,16 @@ public:
 private:
   float left_[kSize] = {};
   float right_[kSize] = {};
-  std::atomic<size_t> write_pos_ { 0 };
+  std::atomic<size_t> write_pos_{0};
 };
 
 // Audio player with trigger detection
 class AudioPlayer {
 public:
-  static constexpr int kSweepSamples = 1024;  // Samples per sweep
-  static constexpr int kDeadSamples = 256;  // Dead time after trigger
-  static constexpr int kEvalSamples = 512;  // Evaluation window for waveform locking
+  static constexpr int kSweepSamples = 1024; // Samples per sweep
+  static constexpr int kDeadSamples = 256;   // Dead time after trigger
+  static constexpr int kEvalSamples =
+      512; // Evaluation window for waveform locking
 
   ~AudioPlayer() {
 #if !VISAGE_EMSCRIPTEN
@@ -498,14 +508,14 @@ public:
     current_gain_ = 0.0f;
   }
 
-  bool load(const std::string& path) {
+  bool load(const std::string &path) {
     if (!audio_data_.load(path))
       return false;
     play_position_ = 0;
     return true;
   }
 
-  void setTestGenerator(TestSignalGenerator* gen) { test_generator_ = gen; }
+  void setTestGenerator(TestSignalGenerator *gen) { test_generator_ = gen; }
 
   void play() {
 #if !VISAGE_EMSCRIPTEN
@@ -533,11 +543,12 @@ public:
     want.freq = audio_data_.left.empty() ? 44100 : audio_data_.sample_rate;
     want.format = AUDIO_F32;
     want.channels = 2;
-    want.samples = 4096;  // Larger buffer for stability on web
+    want.samples = 4096; // Larger buffer for stability on web
     want.callback = sdlCallback;
     want.userdata = this;
 
-    device_ = SDL_OpenAudioDevice(nullptr, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+    device_ = SDL_OpenAudioDevice(nullptr, 0, &want, &have,
+                                  SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
     if (device_ == 0)
       return;
 
@@ -559,7 +570,7 @@ public:
     if (outputParameters.device == paNoDevice)
       return;
 
-    const PaDeviceInfo* info = Pa_GetDeviceInfo(outputParameters.device);
+    const PaDeviceInfo *info = Pa_GetDeviceInfo(outputParameters.device);
     if (!info)
       return;
 
@@ -571,7 +582,8 @@ public:
     double sr = audio_data_.left.empty() ? 44100.0 : audio_data_.sample_rate;
     sample_rate_ = sr;
 
-    PaError err = Pa_OpenStream(&stream_, nullptr, &outputParameters, sr, 512, paClipOff, paCallback, this);
+    PaError err = Pa_OpenStream(&stream_, nullptr, &outputParameters, sr, 512,
+                                paClipOff, paCallback, this);
     if (err != paNoError)
       return;
 
@@ -616,7 +628,8 @@ public:
       test_generator_->setPaused(p);
   }
 
-  void getCurrentSamples(std::vector<float>& left, std::vector<float>& right, int num_samples) {
+  void getCurrentSamples(std::vector<float> &left, std::vector<float> &right,
+                         int num_samples) {
     ring_buffer_.read(left, right, num_samples);
   }
 
@@ -638,7 +651,8 @@ public:
 
           if (filter_enabled_) {
             // Process GLOBAL filter once per sample (preserving state)
-            double mono = (static_cast<double>(l) + static_cast<double>(r)) * 0.5;
+            double mono =
+                (static_cast<double>(l) + static_cast<double>(r)) * 0.5;
             auto outputs = svf_.process(mono);
 
             // Calculate SCOPE values (same logic as main audio processing)
@@ -647,10 +661,10 @@ public:
               auto xy = morpher_.applyXY(outputs.lp, outputs.bp, outputs.hp);
               scope_l = static_cast<float>(xy.x);
               scope_r = static_cast<float>(xy.y);
-            }
-            else {
+            } else {
               // No split: X = raw, Y = filtered with morpher
-              scope_r = static_cast<float>(morpher_.apply(outputs.lp, outputs.bp, outputs.hp));
+              scope_r = static_cast<float>(
+                  morpher_.apply(outputs.lp, outputs.bp, outputs.hp));
             }
           }
 
@@ -665,12 +679,12 @@ public:
       for (int i = 0; i < samples; ++i) {
         size_t idx = play_position_ % total;
         float l = audio_data_.left[idx];
-        float r = audio_data_.stereo ? audio_data_.right[idx] : audio_data_.left[idx];
+        float r =
+            audio_data_.stereo ? audio_data_.right[idx] : audio_data_.left[idx];
         ring_buffer_.write(l, r);
         play_position_++;
       }
-    }
-    else {
+    } else {
       int abs_samples = -samples;
       play_position_ = (play_position_ + total - abs_samples) % total;
 
@@ -679,14 +693,16 @@ public:
       for (int i = 0; i < update_samples; ++i) {
         size_t idx = (play_position_ - update_samples + i + total) % total;
         float l = audio_data_.left[idx];
-        float r = audio_data_.stereo ? audio_data_.right[idx] : audio_data_.left[idx];
+        float r =
+            audio_data_.stereo ? audio_data_.right[idx] : audio_data_.left[idx];
         ring_buffer_.write(l, r);
       }
     }
   }
 
-  // Read triggered samples from the audio thread's latest discovered trigger point
-  bool getTriggeredSamples(std::vector<float>& out, int num_samples) {
+  // Read triggered samples from the audio thread's latest discovered trigger
+  // point
+  bool getTriggeredSamples(std::vector<float> &out, int num_samples) {
     size_t write_pos = ring_buffer_.writePos();
     size_t trigger_pos = latest_trigger_pos_.load(std::memory_order_acquire);
 
@@ -720,9 +736,10 @@ public:
       return;
 
     use_speaker_ = use_speaker;
-    // If we're already playing, we have to restart the stream to change the device.
-    // To avoid clicks, we should technically ramp down first, but for now we'll
-    // just allow the hardware switch to be a bit abrupt, or the user can mute first.
+    // If we're already playing, we have to restart the stream to change the
+    // device. To avoid clicks, we should technically ramp down first, but for
+    // now we'll just allow the hardware switch to be a bit abrupt, or the user
+    // can mute first.
     if (is_playing_) {
       stop();
       play();
@@ -739,22 +756,23 @@ public:
 
     int fallback = paNoDevice;
     for (int i = 0; i < numDevices; ++i) {
-      const PaDeviceInfo* deviceInfo = Pa_GetDeviceInfo(i);
+      const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo(i);
       if (deviceInfo->maxOutputChannels <= 0)
         continue;
 
       if (fallback == paNoDevice)
         fallback = i;
 
-      const char* name = deviceInfo->name;
+      const char *name = deviceInfo->name;
       if (speaker) {
-        if (strstr(name, "Speaker") || strstr(name, "Built-in") || strstr(name, "Internal"))
+        if (strstr(name, "Speaker") || strstr(name, "Built-in") ||
+            strstr(name, "Internal"))
           return i;
-      }
-      else {
-        // For non-speaker, we prefer something that ISN'T the internal speaker if possible,
-        // but really the user just wants the "default" if they didn't toggle speaker.
-        // On macOS, PortAudio's default is usually correct.
+      } else {
+        // For non-speaker, we prefer something that ISN'T the internal speaker
+        // if possible, but really the user just wants the "default" if they
+        // didn't toggle speaker. On macOS, PortAudio's default is usually
+        // correct.
       }
     }
     return fallback;
@@ -768,27 +786,29 @@ public:
 
 private:
 #if VISAGE_EMSCRIPTEN
-  static void sdlCallback(void* userData, Uint8* stream, int len) {
-    auto* player = static_cast<AudioPlayer*>(userData);
-    float* out = reinterpret_cast<float*>(stream);
+  static void sdlCallback(void *userData, Uint8 *stream, int len) {
+    auto *player = static_cast<AudioPlayer *>(userData);
+    float *out = reinterpret_cast<float *>(stream);
     int num_samples = len / (2 * sizeof(float));
     player->process(out, num_samples);
   }
 #else
-  static int paCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
-                        const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
-                        void* userData) {
-    auto* player = static_cast<AudioPlayer*>(userData);
-    float* out = static_cast<float*>(outputBuffer);
+  static int paCallback(const void *inputBuffer, void *outputBuffer,
+                        unsigned long framesPerBuffer,
+                        const PaStreamCallbackTimeInfo *timeInfo,
+                        PaStreamCallbackFlags statusFlags, void *userData) {
+    auto *player = static_cast<AudioPlayer *>(userData);
+    float *out = static_cast<float *>(outputBuffer);
     player->process(out, framesPerBuffer);
     return paContinue;
   }
 #endif
 
-  void process(float* out, unsigned long framesPerBuffer) {
+  void process(float *out, unsigned long framesPerBuffer) {
     size_t total = audio_data_.left.size();
 
-    const float target_gain = (paused_ || shutting_down_) ? 0.0f : volume_.load();
+    const float target_gain =
+        (paused_ || shutting_down_) ? 0.0f : volume_.load();
     const float ramp_inc = 1.0f / (0.050f * sample_rate_);
 
     for (unsigned int i = 0; i < framesPerBuffer; ++i) {
@@ -806,10 +826,10 @@ private:
         if (total > 0) {
           size_t idx = play_position_ % total;
           l = audio_data_.left[idx];
-          r = audio_data_.stereo ? audio_data_.right[idx] : audio_data_.left[idx];
+          r = audio_data_.stereo ? audio_data_.right[idx]
+                                 : audio_data_.left[idx];
           play_position_++;
-        }
-        else if (test_generator_) {
+        } else if (test_generator_) {
           test_generator_->getSample(l, r);
         }
 
@@ -832,15 +852,17 @@ private:
             auto xy = morpher_.applyXY(outputs.lp, outputs.bp, outputs.hp);
             scope_l = static_cast<float>(xy.x);
             scope_r = static_cast<float>(xy.y);
-          }
-          else {
+          } else {
             // No split: X = raw, Y = filtered with morpher
-            scope_r = static_cast<float>(morpher_.apply(outputs.lp, outputs.bp, outputs.hp));
+            scope_r = static_cast<float>(
+                morpher_.apply(outputs.lp, outputs.bp, outputs.hp));
           }
 
           // 2. Calculate SPEAKER values (always filtered)
-          // Note: If no split, applyXY returns identical L/R based on main position
-          auto xy_speaker = morpher_.applyXY(outputs.lp, outputs.bp, outputs.hp);
+          // Note: If no split, applyXY returns identical L/R based on main
+          // position
+          auto xy_speaker =
+              morpher_.applyXY(outputs.lp, outputs.bp, outputs.hp);
           speaker_l = static_cast<float>(xy_speaker.x);
           speaker_r = static_cast<float>(xy_speaker.y);
         }
@@ -852,8 +874,9 @@ private:
           // Trigger detection in audio thread
           float thresh = trigger_threshold_.load(std::memory_order_relaxed);
           bool rising = trigger_rising_.load(std::memory_order_relaxed);
-          bool crossed = rising ? (prev_trigger_l_ <= thresh && scope_l > thresh) :
-                                  (prev_trigger_l_ >= thresh && scope_l < thresh);
+          bool crossed = rising
+                             ? (prev_trigger_l_ <= thresh && scope_l > thresh)
+                             : (prev_trigger_l_ >= thresh && scope_l < thresh);
 
           bool find_trigger = (trigger_holdoff_ >= kSweepSamples);
 
@@ -863,7 +886,8 @@ private:
             bool triggered = true;
 
             if (triggered) {
-              latest_trigger_pos_.store(ring_buffer_.writePos() & (RingBuffer::kSize - 1),
+              latest_trigger_pos_.store(ring_buffer_.writePos() &
+                                            (RingBuffer::kSize - 1),
                                         std::memory_order_release);
               trigger_holdoff_ = 0;
 
@@ -871,8 +895,8 @@ private:
               if (reference_buffer_.size() != kSweepSamples)
                 reference_buffer_.resize(kSweepSamples);
               for (int j = 0; j < kSweepSamples; ++j)
-                reference_buffer_[j] = ring_buffer_.readLeftAt((latest_trigger_pos_.load() + j) &
-                                                               (RingBuffer::kSize - 1));
+                reference_buffer_[j] = ring_buffer_.readLeftAt(
+                    (latest_trigger_pos_.load() + j) & (RingBuffer::kSize - 1));
             }
           }
 
@@ -889,7 +913,7 @@ private:
 #if VISAGE_EMSCRIPTEN
   SDL_AudioDeviceID device_ = 0;
 #else
-  PaStream* stream_ = nullptr;
+  PaStream *stream_ = nullptr;
 #endif
 
   AudioData audio_data_;
@@ -901,10 +925,10 @@ private:
   float prev_trigger_l_ = 0.0f;
   int trigger_holdoff_ = 0;
   std::vector<float> reference_buffer_;
-  std::atomic<size_t> latest_trigger_pos_ { 0 };
-  std::atomic<float> trigger_threshold_ { 0.0f };
-  std::atomic<bool> trigger_rising_ { true };
-  std::atomic<bool> trigger_lock_ { true };
+  std::atomic<size_t> latest_trigger_pos_{0};
+  std::atomic<float> trigger_threshold_{0.0f};
+  std::atomic<bool> trigger_rising_{true};
+  std::atomic<bool> trigger_lock_{true};
 
 public:
   // Filter controls
@@ -930,18 +954,18 @@ public:
   void cycleSplitMode() { stereo_router_.cycleSplitMode(); }
 
   // Expose for UI
-  FilterMorpher& morpher() { return morpher_; }
-  StereoFilterRouter& stereoRouter() { return stereo_router_; }
+  FilterMorpher &morpher() { return morpher_; }
+  StereoFilterRouter &stereoRouter() { return stereo_router_; }
 
   // Filter state
   mutable SimpleSVF svf_;
   FilterMorpher morpher_;
   mutable StereoFilterRouter stereo_router_;
-  std::atomic<float> filter_cutoff_ { kDefaultFilterCutoff };
-  std::atomic<float> filter_resonance_ { kDefaultFilterResonance };
-  std::atomic<bool> filter_enabled_ { true };
-  std::atomic<bool> stereo_split_mode_ { false };
-  std::atomic<float> pre_gain_ { kDefaultPreGain };
+  std::atomic<float> filter_cutoff_{kDefaultFilterCutoff};
+  std::atomic<float> filter_resonance_{kDefaultFilterResonance};
+  std::atomic<bool> filter_enabled_{true};
+  std::atomic<bool> stereo_split_mode_{false};
+  std::atomic<float> pre_gain_{kDefaultPreGain};
 
   // RPM controls
   void setBeta(float b) {
@@ -961,11 +985,11 @@ public:
   float preGain() const { return pre_gain_; }
 
   bool use_speaker_ = false;
-  TestSignalGenerator* test_generator_ = nullptr;
+  TestSignalGenerator *test_generator_ = nullptr;
   float current_gain_ = 0.0f;
-  std::atomic<bool> paused_ { false };
-  std::atomic<bool> shutting_down_ { false };
-  std::atomic<float> volume_ { 0.0f };
+  std::atomic<bool> paused_{false};
+  std::atomic<bool> shutting_down_{false};
+  std::atomic<float> volume_{0.0f};
   float sample_rate_ = 44100.0f;
 };
 
@@ -992,7 +1016,7 @@ public:
 
   bool receivesDragDropFiles() override { return true; }
 
-  void dropFiles(const std::vector<std::string>& paths) override {
+  void dropFiles(const std::vector<std::string> &paths) override {
     if (!paths.empty() && audio_player_) {
       audio_player_->stop();
       if (audio_player_->load(paths[0])) {
@@ -1018,13 +1042,12 @@ public:
     crt_intensity_ = intensity;
     if (intensity > 0.001f) {
       if (!crt_effect_) {
-        crt_effect_ = std::make_unique<visage::ShaderPostEffect>(resources::shaders::vs_custom,
-                                                                 resources::shaders::fs_crt);
+        crt_effect_ = std::make_unique<visage::ShaderPostEffect>(
+            resources::shaders::vs_custom, resources::shaders::fs_crt);
       }
       crt_effect_->setUniformValue("u_crt_params", intensity, 0.0f, 0.0f, 0.0f);
       setPostEffect(crt_effect_.get());
-    }
-    else {
+    } else {
       setPostEffect(nullptr);
     }
   }
@@ -1043,9 +1066,15 @@ public:
   DisplayMode displayMode() const { return display_mode_; }
   void cycleDisplayMode() {
     switch (display_mode_) {
-    case DisplayMode::TimeFree: display_mode_ = DisplayMode::TimeTrigger; break;
-    case DisplayMode::TimeTrigger: display_mode_ = DisplayMode::XY; break;
-    case DisplayMode::XY: display_mode_ = DisplayMode::TimeFree; break;
+    case DisplayMode::TimeFree:
+      display_mode_ = DisplayMode::TimeTrigger;
+      break;
+    case DisplayMode::TimeTrigger:
+      display_mode_ = DisplayMode::XY;
+      break;
+    case DisplayMode::XY:
+      display_mode_ = DisplayMode::TimeFree;
+      break;
     }
   }
 
@@ -1068,14 +1097,18 @@ public:
   }
   bool waveformLock() const { return waveform_lock_; }
 
-  void setAudioPlayer(AudioPlayer* player) { audio_player_ = player; }
+  void setAudioPlayer(AudioPlayer *player) { audio_player_ = player; }
 
   // SVF controls
   // SVF controls delegates
-  FilterMorpher& morpher() { return audio_player_->morpher(); }
-  StereoFilterRouter& stereoRouter() { return audio_player_->stereoRouter(); }
-  float filterCutoff() const { return audio_player_ ? audio_player_->filterCutoff() : 150.0f; }
-  float filterResonance() const { return audio_player_ ? audio_player_->filterResonance() : 0.7f; }
+  FilterMorpher &morpher() { return audio_player_->morpher(); }
+  StereoFilterRouter &stereoRouter() { return audio_player_->stereoRouter(); }
+  float filterCutoff() const {
+    return audio_player_ ? audio_player_->filterCutoff() : 150.0f;
+  }
+  float filterResonance() const {
+    return audio_player_ ? audio_player_->filterResonance() : 0.7f;
+  }
 
   void setFilterCutoff(float fc) {
     if (audio_player_)
@@ -1089,7 +1122,9 @@ public:
     if (audio_player_)
       audio_player_->setFilterEnabled(enabled);
   }
-  bool filterEnabled() const { return audio_player_ ? audio_player_->filterEnabled() : false; }
+  bool filterEnabled() const {
+    return audio_player_ ? audio_player_->filterEnabled() : false;
+  }
 
   void step() {
     needs_step_update_ = true;
@@ -1130,14 +1165,16 @@ public:
     if (audio_player_)
       audio_player_->setStereoSplitMode(enabled);
   }
-  bool stereoSplitMode() const { return audio_player_ ? audio_player_->stereoSplitMode() : false; }
+  bool stereoSplitMode() const {
+    return audio_player_ ? audio_player_->stereoSplitMode() : false;
+  }
   void cycleSplitMode() {
     if (audio_player_)
       audio_player_->cycleSplitMode();
   }
 
   // Test signal generator controls
-  TestSignalGenerator& testSignal() {
+  TestSignalGenerator &testSignal() {
     if (audio_player_ && audio_player_->test_generator_)
       return *audio_player_->test_generator_;
     return test_signal_;
@@ -1145,7 +1182,7 @@ public:
   void setTestSignalEnabled(bool enabled) { test_signal_enabled_ = enabled; }
   bool testSignalEnabled() const { return test_signal_enabled_; }
 
-  void generateWaveform(double time, std::vector<Sample>& samples) {
+  void generateWaveform(double time, std::vector<Sample> &samples) {
     // Note: This now generates NORMALIZED coordinates (-1 to 1 range typically)
     // they are mapped to screen pixels in renderWaveform.
 
@@ -1159,13 +1196,16 @@ public:
         samples.resize(num_samples);
         for (int i = 0; i < num_samples; ++i) {
           // Store raw signal values (clamped for safety)
-          samples[i].x = std::isfinite(left[i]) ? std::clamp(left[i], -2.0f, 2.0f) : 0.0f;
-          samples[i].y = std::isfinite(right[i]) ? std::clamp(right[i], -2.0f, 2.0f) : 0.0f;
+          samples[i].x =
+              std::isfinite(left[i]) ? std::clamp(left[i], -2.0f, 2.0f) : 0.0f;
+          samples[i].y = std::isfinite(right[i])
+                             ? std::clamp(right[i], -2.0f, 2.0f)
+                             : 0.0f;
         }
 
         // Apply slew filter (one-pole low-pass) to smooth jittery lines
         if (slew_ > 0.001f) {
-          float alpha = 1.0f - slew_;  // Higher slew_ = more smoothing
+          float alpha = 1.0f - slew_; // Higher slew_ = more smoothing
           for (int i = 0; i < num_samples; ++i) {
             prev_slew_x_ = prev_slew_x_ + alpha * (samples[i].x - prev_slew_x_);
             prev_slew_y_ = prev_slew_y_ + alpha * (samples[i].y - prev_slew_y_);
@@ -1174,8 +1214,7 @@ public:
           }
         }
         return;
-      }
-      else if (display_mode_ == DisplayMode::TimeTrigger) {
+      } else if (display_mode_ == DisplayMode::TimeTrigger) {
         const int num_samples = 512;
         std::vector<float> audio;
         audio_player_->getTriggeredSamples(audio, num_samples);
@@ -1186,8 +1225,7 @@ public:
           samples[i].y = audio[i];
         }
         return;
-      }
-      else if (display_mode_ == DisplayMode::TimeFree) {
+      } else if (display_mode_ == DisplayMode::TimeFree) {
         const int num_samples = 512;
         std::vector<float> left, right;
         audio_player_->getCurrentSamples(left, right, num_samples);
@@ -1205,7 +1243,7 @@ public:
     if (test_signal_enabled_) {
       const int num_samples = 512;
       samples.resize(num_samples);
-      TestSignalGenerator& gen = testSignal();
+      TestSignalGenerator &gen = testSignal();
 
       for (int i = 0; i < num_samples; ++i) {
         float l, r;
@@ -1216,8 +1254,7 @@ public:
         if (display_mode_ == DisplayMode::XY) {
           samples[i].x = l;
           samples[i].y = r;
-        }
-        else {
+        } else {
           samples[i].x = static_cast<float>(i) / (num_samples - 1);
           samples[i].y = l;
         }
@@ -1231,7 +1268,8 @@ public:
 
     const float freq1 = 3.0f + 0.5f * std::sin(static_cast<float>(time) * 0.3f);
     const float freq2 = 7.0f + std::sin(static_cast<float>(time) * 0.2f);
-    const float freq3 = 11.0f + 0.3f * std::sin(static_cast<float>(time) * 0.15f);
+    const float freq3 =
+        11.0f + 0.3f * std::sin(static_cast<float>(time) * 0.15f);
     const float time_offset = static_cast<float>(time) * 2.0f;
 
     for (int i = 0; i < num_samples; ++i) {
@@ -1241,8 +1279,7 @@ public:
       if (display_mode_ == DisplayMode::XY) {
         samples[i].x = std::sin(phase * 3.0f + time_offset);
         samples[i].y = std::sin(phase * 2.0f + time_offset * 0.7f);
-      }
-      else {
+      } else {
         float signal = 0.5f * std::sin(phase * freq1 + time_offset);
         signal += 0.25f * std::sin(phase * freq2 + time_offset * 1.3f);
         signal += 0.15f * std::sin(phase * freq3 + time_offset * 0.7f);
@@ -1253,7 +1290,8 @@ public:
     }
   }
 
-  void renderWaveform(visage::Canvas& canvas, const std::vector<Sample>& samples, float alpha_mult) {
+  void renderWaveform(visage::Canvas &canvas,
+                      const std::vector<Sample> &samples, float alpha_mult) {
     if (samples.size() < 2)
       return;
 
@@ -1262,7 +1300,7 @@ public:
     if (w <= 0 || h <= 0)
       return;
 
-    auto toPixel = [&](const Sample& s) -> Sample {
+    auto toPixel = [&](const Sample &s) -> Sample {
       Sample p;
       if (display_mode_ == DisplayMode::XY) {
         float cx = w * 0.5f;
@@ -1278,8 +1316,7 @@ public:
 
         p.x = cx + rx * base_scale;
         p.y = cy - ry * base_scale;
-      }
-      else {
+      } else {
         float cy = h * 0.5f;
         float base_scale = h * 0.4f * post_scale_;
         p.x = s.x * w;
@@ -1291,7 +1328,8 @@ public:
     const float diag = std::sqrt(w * w + h * h);
     const float ref_energy = 50.0f;
     const float shutter_ratio = 1.0f;
-    const float base_gain = (ref_energy * diag) / (shutter_ratio * samples.size() * kOversampleRate);
+    const float base_gain = (ref_energy * diag) /
+                            (shutter_ratio * samples.size() * kOversampleRate);
     const float unit_gain = base_gain * beam_gain_ * alpha_mult;
 
     const int num_samples = static_cast<int>(samples.size());
@@ -1315,7 +1353,8 @@ public:
         step_dist = kMaxDist * step_mult_;
       }
 
-      const int n = std::min(100, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
+      const int n = std::min(
+          100, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
       const float nr = 1.0f / static_cast<float>(n);
       const float ix = dx * nr;
       const float iy = dy * nr;
@@ -1323,25 +1362,28 @@ public:
       const int end = (pos == num_samples - 2) ? n + 1 : n;
 
       // Velocity-based hue shift: faster beam motion shifts hue
-      float velocity = d * nr;  // Instantaneous velocity per substep
-      float hue_shift = velocity * hue_dynamics_ * 180.0f;  // Scale for visible effect
+      float velocity = d * nr; // Instantaneous velocity per substep
+      float hue_shift =
+          velocity * hue_dynamics_ * 180.0f; // Scale for visible effect
       float dynamic_hue = std::fmod(waveform_hue_ + hue_shift, 360.0f);
       if (dynamic_hue < 0.0f)
         dynamic_hue += 360.0f;
 
       float brightness = std::min(1.0f, g);
-      visage::Color color = visage::Color::fromAHSV(brightness * 0.9f, dynamic_hue, 0.85f, brightness);
+      visage::Color color = visage::Color::fromAHSV(
+          brightness * 0.9f, dynamic_hue, 0.85f, brightness);
       canvas.setColor(color);
 
       for (int k = 0; k < end; ++k) {
-        canvas.fadeCircle(x - half_beam, y - half_beam, beam_size_, beam_size_ * 0.35f);
+        canvas.fadeCircle(x - half_beam, y - half_beam, beam_size_,
+                          beam_size_ * 0.35f);
         x += ix;
         y += iy;
       }
     }
   }
 
-  void draw(visage::Canvas& canvas) override {
+  void draw(visage::Canvas &canvas) override {
     int iw = width();
     int ih = height();
     double time = canvas.time();
@@ -1418,7 +1460,8 @@ private:
   float beam_size_ = 3.0f;
   float beam_gain_ = 1.5f;
   float waveform_hue_ = kDefaultWaveformHue;
-  float hue_dynamics_ = kDefaultHueDynamics;  // Velocity-based hue shift sensitivity (0-1)
+  float hue_dynamics_ =
+      kDefaultHueDynamics; // Velocity-based hue shift sensitivity (0-1)
 
   DisplayMode display_mode_ = DisplayMode::XY;
   double time_offset_ = 0.0;
@@ -1428,9 +1471,9 @@ private:
 
   // Test signal generator for XY mode without audio
   TestSignalGenerator test_signal_;
-  bool test_signal_enabled_ = true;  // Enabled by default
+  bool test_signal_enabled_ = true; // Enabled by default
 
-  AudioPlayer* audio_player_ = nullptr;
+  AudioPlayer *audio_player_ = nullptr;
   bool needs_step_update_ = false;
   float post_scale_ = 1.0f;
   float post_rotate_ = 0.0f;
@@ -1438,19 +1481,19 @@ private:
   float crt_intensity_ = kDefaultCrtIntensity;
   std::unique_ptr<visage::ShaderPostEffect> crt_effect_;
   float slew_ = kDefaultSlew;
-  float prev_slew_x_ = 0.0f;  // Previous filtered X value for slew filter
-  float prev_slew_y_ = 0.0f;  // Previous filtered Y value for slew filter
-  float step_mult_ = kDefaultStepMult;  // Rendering step multiplier
-  bool beta_step_coupled_ = true;  // Couple beta to step distance (default on)
+  float prev_slew_x_ = 0.0f; // Previous filtered X value for slew filter
+  float prev_slew_y_ = 0.0f; // Previous filtered Y value for slew filter
+  float step_mult_ = kDefaultStepMult; // Rendering step multiplier
+  bool beta_step_coupled_ = true; // Couple beta to step distance (default on)
 };
 
-class ExampleEditor;
-static ExampleEditor* g_editor = nullptr;
+class FavewormEditor;
+static FavewormEditor *g_editor = nullptr;
 
 class FadeOutTimer : public visage::EventTimer {
 public:
-  FadeOutTimer(visage::Frame* editor, std::function<void()> on_complete) :
-      editor_(editor), on_complete_(std::move(on_complete)) { }
+  FadeOutTimer(visage::Frame *editor, std::function<void()> on_complete)
+      : editor_(editor), on_complete_(std::move(on_complete)) {}
 
   void timerCallback() override {
     alpha_ -= 0.04f;
@@ -1458,22 +1501,21 @@ public:
       stopTimer();
       if (on_complete_)
         on_complete_();
-    }
-    else {
+    } else {
       editor_->setAlphaTransparency(alpha_);
       editor_->redraw();
     }
   }
 
 private:
-  visage::Frame* editor_;
+  visage::Frame *editor_;
   std::function<void()> on_complete_;
   float alpha_ = 1.0f;
 };
 
-class ExampleEditor : public visage::ApplicationWindow {
+class FavewormEditor : public visage::ApplicationWindow {
 public:
-  ExampleEditor() {
+  FavewormEditor() {
     g_editor = this;
     setAcceptsKeystrokes(true);
 
@@ -1489,19 +1531,21 @@ public:
     // Add controls to scrollable control panel
     control_panel_.addScrolledChild(&mode_selector_);
     mode_selector_.setLabel("Mode");
-    mode_selector_.setOptions({ "Time", "Trig", "XY" });
+    mode_selector_.setOptions({"Time", "Trig", "XY"});
     mode_selector_.setColor(visage::Color(1.0f, 0.4f, 0.8f, 0.9f));
     mode_selector_.setCallback([this](int i) {
       oscilloscope_.setDisplayMode(static_cast<DisplayMode>(i));
       updatePanelVisibility();
     });
-    mode_selector_.setIndex(static_cast<int>(DisplayMode::XY));  // Match default display mode
+    mode_selector_.setIndex(
+        static_cast<int>(DisplayMode::XY)); // Match default display mode
 
     control_panel_.addScrolledChild(&trigger_threshold_knob_);
     trigger_threshold_knob_.setValue(&trigger_threshold_);
     trigger_threshold_knob_.setRange(-1.0f, 1.0f);
     trigger_threshold_knob_.setColor(visage::Color(1.0f, 0.8f, 0.2f, 0.6f));
-    trigger_threshold_knob_.setCallback([this](float v) { oscilloscope_.setTriggerThreshold(v); });
+    trigger_threshold_knob_.setCallback(
+        [this](float v) { oscilloscope_.setTriggerThreshold(v); });
 
     control_panel_.addScrolledChild(&signal_box_);
     control_panel_.addScrolledChild(&filter_box_);
@@ -1509,7 +1553,8 @@ public:
 
     control_panel_.addScrolledChild(&beta_knob_);
     beta_knob_.setValue(&signal_beta_);
-    beta_knob_.setRange(TestSignalGenerator::kMinBeta, TestSignalGenerator::kMaxBeta);
+    beta_knob_.setRange(TestSignalGenerator::kMinBeta,
+                        TestSignalGenerator::kMaxBeta);
     beta_knob_.setColor(visage::Color(1.0f, 0.5f, 0.9f, 0.5f));
     beta_knob_.setCallback([this](float v) { audio_player_.setBeta(v); });
 
@@ -1519,15 +1564,17 @@ public:
     beta_display_.setDecimals(1);
 
     control_panel_.addScrolledChild(&exponent_switch_);
-    exponent_switch_.setValue(false);  // false = 1, true = 2
+    exponent_switch_.setValue(false); // false = 1, true = 2
     exponent_switch_.setColor(visage::Color(1.0f, 0.6f, 0.8f, 0.6f));
-    exponent_switch_.setCallback([this](bool v) { audio_player_.setExponent(v ? 2 : 1); });
+    exponent_switch_.setCallback(
+        [this](bool v) { audio_player_.setExponent(v ? 2 : 1); });
 
     control_panel_.addScrolledChild(&pre_gain_knob_);
     pre_gain_knob_.setValue(&pre_gain_val_);
     pre_gain_knob_.setRange(kMinPreGain, kMaxPreGain);
     pre_gain_knob_.setColor(visage::Color(1.0f, 0.9f, 0.6f, 0.5f));
-    pre_gain_knob_.setCallback([this](float v) { audio_player_.setPreGain(v); });
+    pre_gain_knob_.setCallback(
+        [this](float v) { audio_player_.setPreGain(v); });
 
     control_panel_.addScrolledChild(&pre_gain_display_);
     pre_gain_display_.setValue(&pre_gain_val_);
@@ -1537,19 +1584,24 @@ public:
     control_panel_.addScrolledChild(&grid_switch_);
     grid_switch_.setValue(true);
     grid_switch_.setColor(visage::Color(1.0f, 0.8f, 0.8f, 0.4f));
-    grid_switch_.setCallback([this](bool v) { oscilloscope_.setGridEnabled(v); });
+    grid_switch_.setCallback(
+        [this](bool v) { oscilloscope_.setGridEnabled(v); });
 
     control_panel_.addScrolledChild(&freq_knob_);
     freq_knob_.setValue(&signal_freq_);
-    freq_knob_.setRange(TestSignalGenerator::kMinFrequency, TestSignalGenerator::kMaxFrequency);
+    freq_knob_.setRange(TestSignalGenerator::kMinFrequency,
+                        TestSignalGenerator::kMaxFrequency);
     freq_knob_.setColor(visage::Color(1.0f, 0.5f, 0.9f, 0.5f));
-    freq_knob_.setCallback([this](float v) { oscilloscope_.testSignal().setFrequency(v); });
+    freq_knob_.setCallback(
+        [this](float v) { oscilloscope_.testSignal().setFrequency(v); });
 
     control_panel_.addScrolledChild(&detune_knob_);
     detune_knob_.setValue(&signal_detune_);
-    detune_knob_.setRange(TestSignalGenerator::kMinDetune, TestSignalGenerator::kMaxDetune);
+    detune_knob_.setRange(TestSignalGenerator::kMinDetune,
+                          TestSignalGenerator::kMaxDetune);
     detune_knob_.setColor(visage::Color(1.0f, 0.6f, 0.8f, 0.6f));
-    detune_knob_.setCallback([this](float v) { oscilloscope_.testSignal().setDetune(v); });
+    detune_knob_.setCallback(
+        [this](float v) { oscilloscope_.testSignal().setDetune(v); });
 
     control_panel_.addScrolledChild(&freq_display_);
     freq_display_.setValue(&signal_freq_);
@@ -1576,7 +1628,8 @@ public:
     cutoff_knob_.setValue(&filter_cutoff_);
     cutoff_knob_.setRange(kMinFilterCutoff, kMaxFilterCutoff);
     cutoff_knob_.setColor(visage::Color(1.0f, 0.4f, 0.9f, 0.9f));
-    cutoff_knob_.setCallback([this](float v) { oscilloscope_.setFilterCutoff(v); });
+    cutoff_knob_.setCallback(
+        [this](float v) { oscilloscope_.setFilterCutoff(v); });
 
     control_panel_.addScrolledChild(&cutoff_display_);
     cutoff_display_.setValue(&filter_cutoff_);
@@ -1601,7 +1654,8 @@ public:
     split_angle_knob_.setValue(&split_angle_);
     split_angle_knob_.setRange(kMinSplitAngle, kMaxSplitAngle);
     split_angle_knob_.setColor(visage::Color(1.0f, 0.3f, 0.7f, 0.9f));
-    split_angle_knob_.setCallback([this](float v) { oscilloscope_.morpher().setSplitAngle(v); });
+    split_angle_knob_.setCallback(
+        [this](float v) { oscilloscope_.morpher().setSplitAngle(v); });
 
     control_panel_.addScrolledChild(&angle_display_);
     angle_display_.setValue(&split_angle_);
@@ -1612,7 +1666,8 @@ public:
     split_depth_knob_.setValue(&split_depth_);
     split_depth_knob_.setRange(kMinSplitDepth, kMaxSplitDepth);
     split_depth_knob_.setColor(visage::Color(1.0f, 0.3f, 0.7f, 0.9f));
-    split_depth_knob_.setCallback([this](float v) { oscilloscope_.morpher().setSplitDepth(v); });
+    split_depth_knob_.setCallback(
+        [this](float v) { oscilloscope_.morpher().setSplitDepth(v); });
 
     control_panel_.addScrolledChild(&depth_display_);
     depth_display_.setValue(&split_depth_);
@@ -1623,13 +1678,15 @@ public:
     post_scale_knob_.setValue(&post_scale_val_);
     post_scale_knob_.setRange(kMinPostScale, kMaxPostScale);
     post_scale_knob_.setColor(visage::Color(1.0f, 0.5f, 0.7f, 0.9f));
-    post_scale_knob_.setCallback([this](float v) { oscilloscope_.setPostScale(v); });
+    post_scale_knob_.setCallback(
+        [this](float v) { oscilloscope_.setPostScale(v); });
 
     control_panel_.addScrolledChild(&post_rotate_knob_);
     post_rotate_knob_.setValue(&post_rotate_val_);
     post_rotate_knob_.setRange(kMinPostRotate, kMaxPostRotate);
     post_rotate_knob_.setColor(visage::Color(1.0f, 0.5f, 0.7f, 0.9f));
-    post_rotate_knob_.setCallback([this](float v) { oscilloscope_.setPostRotate(v); });
+    post_rotate_knob_.setCallback(
+        [this](float v) { oscilloscope_.setPostRotate(v); });
 
     control_panel_.addScrolledChild(&volume_knob_);
     volume_knob_.setValue(&volume_val_);
@@ -1640,7 +1697,8 @@ public:
     control_panel_.addScrolledChild(&hue_slider_);
     hue_slider_.setValue(&waveform_hue_);
     hue_slider_.setRange(0.0f, 360.0f);
-    hue_slider_.setColor(visage::Color::fromAHSV(1.0f, waveform_hue_, 0.85f, 0.9f));
+    hue_slider_.setColor(
+        visage::Color::fromAHSV(1.0f, waveform_hue_, 0.85f, 0.9f));
     hue_slider_.setCallback([this](float v) {
       oscilloscope_.setWaveformHue(v);
       hue_slider_.setColor(visage::Color::fromAHSV(1.0f, v, 0.85f, 0.9f));
@@ -1660,47 +1718,51 @@ public:
     dynamics_knob_.setValue(&hue_dynamics_);
     dynamics_knob_.setRange(0.0f, 1.25f);
     dynamics_knob_.setColor(visage::Color(1.0f, 0.4f, 1.0f, 0.8f));
-    dynamics_knob_.setCallback([this](float v) { oscilloscope_.setHueDynamics(v); });
+    dynamics_knob_.setCallback(
+        [this](float v) { oscilloscope_.setHueDynamics(v); });
 
     control_panel_.addScrolledChild(&phosphor_knob_);
     phosphor_knob_.setValue(&phosphor_decay_);
     phosphor_knob_.setRange(0.0f, 1.0f);
     phosphor_knob_.setColor(visage::Color(1.0f, 0.6f, 1.0f, 0.6f));
-    phosphor_knob_.setCallback([this](float v) { oscilloscope_.setPhosphorDecay(v); });
+    phosphor_knob_.setCallback(
+        [this](float v) { oscilloscope_.setPhosphorDecay(v); });
 
     control_panel_.addScrolledChild(&crt_knob_);
     crt_knob_.setValue(&crt_intensity_);
     crt_knob_.setRange(0.0f, 1.0f);
-    crt_knob_.setColor(visage::Color(1.0f, 0.3f, 0.5f, 0.7f));  // Reddish-pink for retro feel
-    crt_knob_.setCallback([this](float v) { oscilloscope_.setCrtIntensity(v); });
+    crt_knob_.setColor(
+        visage::Color(1.0f, 0.3f, 0.5f, 0.7f)); // Reddish-pink for retro feel
+    crt_knob_.setCallback(
+        [this](float v) { oscilloscope_.setCrtIntensity(v); });
 
     control_panel_.addScrolledChild(&slew_knob_);
     slew_knob_.setValue(&slew_);
     slew_knob_.setRange(0.0f, 0.99f);
-    slew_knob_.setColor(visage::Color(1.0f, 0.5f, 0.9f, 0.7f));  // Cyan-ish
+    slew_knob_.setColor(visage::Color(1.0f, 0.5f, 0.9f, 0.7f)); // Cyan-ish
     slew_knob_.setCallback([this](float v) { oscilloscope_.setSlew(v); });
 
     control_panel_.addScrolledChild(&step_knob_);
     step_knob_.setValue(&step_mult_);
     step_knob_.setRange(kMinStepMult, kMaxStepMult);
-    step_knob_.setColor(visage::Color(1.0f, 0.6f, 0.7f, 0.6f));  // Light pink
+    step_knob_.setColor(visage::Color(1.0f, 0.6f, 0.7f, 0.6f)); // Light pink
     step_knob_.setCallback([this](float v) { oscilloscope_.setStepMult(v); });
-    step_knob_.setEnabled(false);  // Disabled by default (beta coupled)
+    step_knob_.setEnabled(false); // Disabled by default (beta coupled)
 
     control_panel_.addScrolledChild(&beta_step_switch_);
-    beta_step_switch_.setValue(true);  // Coupled by default
+    beta_step_switch_.setValue(true); // Coupled by default
     beta_step_switch_.setColor(visage::Color(1.0f, 0.6f, 0.7f, 0.6f));
     beta_step_switch_.setCallback([this](bool v) {
       beta_step_coupled_ = v;
       oscilloscope_.setBetaStepCoupled(v);
-      step_knob_.setEnabled(!v);  // Enable Step knob when uncoupled
+      step_knob_.setEnabled(!v); // Enable Step knob when uncoupled
     });
 
     // Help overlay (covers entire window)
     addChild(&help_overlay_);
 
     bloom_.setBloomSize(20.0f);
-    bloom_.setBloomIntensity(0.5f);  // Slightly higher default glow
+    bloom_.setBloomIntensity(0.5f); // Slightly higher default glow
     setPostEffect(&bloom_);
 
     // Initialize oscilloscope parameters to match UI defaults
@@ -1732,7 +1794,7 @@ public:
   }
 
   void updatePanelVisibility() {
-    bool show_panel = true;  // Always show panel
+    bool show_panel = true; // Always show panel
     bool is_xy = oscilloscope_.displayMode() == DisplayMode::XY;
 
     control_panel_.setVisible(show_panel);
@@ -1800,11 +1862,12 @@ public:
     const int panel_width = 140;
     const int margin = 4;
     const int knob_size = 60;  // Taller to fit label
-    const int js_size = 90;  // Taller to fit label
-    const int selector_h = 40;  // Taller for multi-switch with LEDs
-    const int btn_size = 24;  // Half size buttons
+    const int js_size = 90;    // Taller to fit label
+    const int selector_h = 40; // Taller for multi-switch with LEDs
+    const int btn_size = 24;   // Half size buttons
     const int margin_x = 10;
-    const int switch_h = 42;  // Square push button height (needs room for LED + button + label)
+    const int switch_h =
+        42; // Square push button height (needs room for LED + button + label)
 
     int panel_x = width() - panel_width;
     control_panel_.setBounds(panel_x, 0, panel_width, height());
@@ -1819,7 +1882,8 @@ public:
     // Trigger threshold knob (only in trigger mode)
     if (oscilloscope_.displayMode() == DisplayMode::TimeTrigger) {
       int small_knob = 40;
-      trigger_threshold_knob_.setBounds((panel_width - small_knob) / 2, y, small_knob, small_knob);
+      trigger_threshold_knob_.setBounds((panel_width - small_knob) / 2, y,
+                                        small_knob, small_knob);
       y += small_knob + margin + 8;
     }
 
@@ -1827,7 +1891,7 @@ public:
     if (oscilloscope_.displayMode() == DisplayMode::XY) {
       // --- SIGNAL SECTION ---
       int signal_start_y = y;
-      y += 12;  // Title padding
+      y += 12; // Title padding
 
       // Beta, Sq switch, and Gain side by side
       int small_knob = 50;
@@ -1837,8 +1901,8 @@ public:
       int mid_x = (panel_width - extra_small_btn) / 2;
 
       beta_knob_.setBounds(left_x, y, small_knob, small_knob);
-      exponent_switch_.setBounds(mid_x, y + (small_knob - extra_small_btn) / 2, extra_small_btn,
-                                 extra_small_btn);
+      exponent_switch_.setBounds(mid_x, y + (small_knob - extra_small_btn) / 2,
+                                 extra_small_btn, extra_small_btn);
       pre_gain_knob_.setBounds(right_x, y, small_knob, small_knob);
       y += small_knob + 2;
 
@@ -1858,20 +1922,22 @@ public:
       detune_display_.setBounds(right_x, y, small_knob, small_display_h);
       y += small_display_h + 10;
 
-      signal_box_.setBounds(5, signal_start_y, panel_width - 10, y - signal_start_y);
+      signal_box_.setBounds(5, signal_start_y, panel_width - 10,
+                            y - signal_start_y);
       y += 12;
 
       // --- FILTER SECTION ---
       int filter_start_y = y;
-      y += 12;  // Reduced from 18 to give more space for taller joystick
+      y += 12; // Reduced from 18 to give more space for taller joystick
 
       // Joystick and Filter Switch
       int js_size_tall = js_size + 10;
-      int js_x = (panel_width - js_size) / 2;  // Centered
+      int js_x = (panel_width - js_size) / 2; // Centered
       filter_joystick_.setBounds(js_x, y, js_size, js_size_tall);
 
       // Filter switch on far right to avoid overlapping joystick area
-      filter_switch_.setBounds(panel_width - margin - btn_size - 4, y, btn_size, btn_size);
+      filter_switch_.setBounds(panel_width - margin - btn_size - 4, y, btn_size,
+                               btn_size);
 
       y += js_size_tall + margin;
 
@@ -1893,7 +1959,8 @@ public:
       depth_display_.setBounds(right_f_x, y, small_knob, small_display_h);
       y += small_display_h + 10;
 
-      filter_box_.setBounds(5, filter_start_y, panel_width - 10, y - filter_start_y);
+      filter_box_.setBounds(5, filter_start_y, panel_width - 10,
+                            y - filter_start_y);
       y += 12;
     }
 
@@ -1906,28 +1973,32 @@ public:
       int extra_small_knob = 40;
       int extra_left_x = 10 + margin;
       int extra_right_x = panel_width - 10 - margin - extra_small_knob;
-      post_scale_knob_.setBounds(extra_left_x, y, extra_small_knob, extra_small_knob);
-      post_rotate_knob_.setBounds(extra_right_x, y, extra_small_knob, extra_small_knob);
-      grid_switch_.setBounds((panel_width - btn_size) / 2, y + (extra_small_knob - btn_size) / 2,
-                             btn_size, btn_size);
+      post_scale_knob_.setBounds(extra_left_x, y, extra_small_knob,
+                                 extra_small_knob);
+      post_rotate_knob_.setBounds(extra_right_x, y, extra_small_knob,
+                                  extra_small_knob);
+      grid_switch_.setBounds((panel_width - btn_size) / 2,
+                             y + (extra_small_knob - btn_size) / 2, btn_size,
+                             btn_size);
       y += extra_small_knob + 10;
-    }
-    else {
+    } else {
       // Grid switch alone centered if not in XY
-      grid_switch_.setBounds((panel_width - btn_size) / 2, y, btn_size, btn_size);
+      grid_switch_.setBounds((panel_width - btn_size) / 2, y, btn_size,
+                             btn_size);
       y += btn_size + 10;
     }
 
     // Hue slider, 3-row knob grid, Bloom slider - arranged horizontally
-    int slider_w = 30;  // Narrower sliders to make room
+    int slider_w = 30;   // Narrower sliders to make room
     int slider_h = 108;  // Taller sliders to match 3-row knob grid
-    int small_knob = 32;  // Smaller knobs to fit grid
+    int small_knob = 32; // Smaller knobs to fit grid
     int left_margin = 8;
 
     // Calculate spacing: slider | spacing | 2 knobs | spacing | slider
-    int knob_pair_width = small_knob * 2 + 4;  // Two knobs side by side with small gap
+    int knob_pair_width =
+        small_knob * 2 + 4; // Two knobs side by side with small gap
     int total_width = slider_w * 2 + knob_pair_width;
-    int available_space = panel_width - 16;  // Account for margins
+    int available_space = panel_width - 16; // Account for margins
     int spacing = (available_space - total_width) / 2;
 
     int x_pos = left_margin;
@@ -1936,22 +2007,30 @@ public:
     hue_slider_.setBounds(x_pos, y, slider_w, slider_h);
     x_pos += slider_w + spacing;
 
-    // 3x2 grid of knobs in the middle (with bottom row having single centered knob)
+    // 3x2 grid of knobs in the middle (with bottom row having single centered
+    // knob)
     int knob_gap = 4;
     int grid_height = small_knob * 3 + knob_gap * 2;
     int knob_y_top = y + (slider_h - grid_height) / 2;
 
     // Top row: Dyn, Phos
     dynamics_knob_.setBounds(x_pos, knob_y_top, small_knob, small_knob);
-    phosphor_knob_.setBounds(x_pos + small_knob + knob_gap, knob_y_top, small_knob, small_knob);
+    phosphor_knob_.setBounds(x_pos + small_knob + knob_gap, knob_y_top,
+                             small_knob, small_knob);
 
     // Middle row: CRT, Slew
-    crt_knob_.setBounds(x_pos, knob_y_top + small_knob + knob_gap, small_knob, small_knob);
-    slew_knob_.setBounds(x_pos + small_knob + knob_gap, knob_y_top + small_knob + knob_gap, small_knob, small_knob);
+    crt_knob_.setBounds(x_pos, knob_y_top + small_knob + knob_gap, small_knob,
+                        small_knob);
+    slew_knob_.setBounds(x_pos + small_knob + knob_gap,
+                         knob_y_top + small_knob + knob_gap, small_knob,
+                         small_knob);
 
     // Bottom row: Step knob, B toggle (side by side)
-    step_knob_.setBounds(x_pos, knob_y_top + (small_knob + knob_gap) * 2, small_knob, small_knob);
-    beta_step_switch_.setBounds(x_pos + small_knob + knob_gap, knob_y_top + (small_knob + knob_gap) * 2, small_knob, small_knob);
+    step_knob_.setBounds(x_pos, knob_y_top + (small_knob + knob_gap) * 2,
+                         small_knob, small_knob);
+    beta_step_switch_.setBounds(x_pos + small_knob + knob_gap,
+                                knob_y_top + (small_knob + knob_gap) * 2,
+                                small_knob, small_knob);
 
     x_pos += knob_pair_width + spacing;
 
@@ -1960,11 +2039,13 @@ public:
 
     y += slider_h + 8;
 
-    display_box_.setBounds(5, display_start_y, panel_width - 10, y - display_start_y);
+    display_box_.setBounds(5, display_start_y, panel_width - 10,
+                           y - display_start_y);
     y += 10;
 
     // Volume knob below Display frame
-    volume_knob_.setBounds((panel_width - knob_size) / 2, y, knob_size, knob_size);
+    volume_knob_.setBounds((panel_width - knob_size) / 2, y, knob_size,
+                           knob_size);
     y += knob_size + 10;
 
     // Oscilloscope fills remaining space
@@ -1980,75 +2061,68 @@ public:
   }
 
   bool bloomEnabled() const { return bloom_enabled_; }
-  void setPhosphorEnabled(bool enabled) { oscilloscope_.setPhosphorEnabled(enabled); }
+  void setPhosphorEnabled(bool enabled) {
+    oscilloscope_.setPhosphorEnabled(enabled);
+  }
   bool phosphorEnabled() const { return oscilloscope_.phosphorEnabled(); }
 
-  void draw(visage::Canvas& canvas) override {
+  void draw(visage::Canvas &canvas) override {
     canvas.setColor(0xff050508);
     canvas.fill(0, 0, width(), height());
   }
 
-  bool keyPress(const visage::KeyEvent& event) override {
+  bool keyPress(const visage::KeyEvent &event) override {
     if (event.keyCode() == visage::KeyCode::H ||
         (event.isShiftDown() && event.keyCode() == visage::KeyCode::Slash)) {
       help_overlay_.toggle();
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::G) {
+    } else if (event.keyCode() == visage::KeyCode::G) {
       oscilloscope_.setGridEnabled(!oscilloscope_.gridEnabled());
       grid_switch_.setValue(oscilloscope_.gridEnabled());
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::M) {
+    } else if (event.keyCode() == visage::KeyCode::M) {
       // Mute/unmute toggle (0.0 <-> 0.5)
       if (volume_val_ > 0.0f) {
         saved_volume_ = volume_val_;
         setVolume(0.0f);
-      }
-      else {
+      } else {
         setVolume(saved_volume_ > 0.0f ? saved_volume_ : 0.5f);
       }
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::L) {
+    } else if (event.keyCode() == visage::KeyCode::L) {
       oscilloscope_.setWaveformLock(!oscilloscope_.waveformLock());
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::E) {
+    } else if (event.keyCode() == visage::KeyCode::E) {
       oscilloscope_.setTriggerRising(!oscilloscope_.triggerRising());
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::F) {
+    } else if (event.keyCode() == visage::KeyCode::F) {
       oscilloscope_.setFilterEnabled(!oscilloscope_.filterEnabled());
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::W) {
+    } else if (event.keyCode() == visage::KeyCode::W) {
       // Toggle exponent (square mode)
       bool next = !exponent_switch_.value();
       exponent_switch_.setValue(next);
       audio_player_.setExponent(next ? 2 : 1);
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::Space) {
+    } else if (event.keyCode() == visage::KeyCode::Space) {
       // Toggle pause state (Freezes waveform and audio)
       audio_player_.setPaused(!audio_player_.isPaused());
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::Up) {
+    } else if (event.keyCode() == visage::KeyCode::Up) {
       if (event.isShiftDown()) {
         // Adjust trigger threshold
-        oscilloscope_.setTriggerThreshold(std::min(1.0f, oscilloscope_.triggerThreshold() + 0.05f));
+        oscilloscope_.setTriggerThreshold(
+            std::min(1.0f, oscilloscope_.triggerThreshold() + 0.05f));
       }
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::Down) {
+    } else if (event.keyCode() == visage::KeyCode::Down) {
       if (event.isShiftDown()) {
         // Adjust trigger threshold
-        oscilloscope_.setTriggerThreshold(std::max(-1.0f, oscilloscope_.triggerThreshold() - 0.05f));
+        oscilloscope_.setTriggerThreshold(
+            std::max(-1.0f, oscilloscope_.triggerThreshold() - 0.05f));
       }
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::Comma) {
+    } else if (event.keyCode() == visage::KeyCode::Comma) {
       // Step back in time
       if (audio_player_.isPaused()) {
         int samples = event.isShiftDown() ? -4410 : -441;
@@ -2056,8 +2130,7 @@ public:
         oscilloscope_.step();
       }
       return true;
-    }
-    else if (event.keyCode() == visage::KeyCode::Period) {
+    } else if (event.keyCode() == visage::KeyCode::Period) {
       // Step forward in time
       if (audio_player_.isPaused()) {
         int samples = event.isShiftDown() ? 4410 : 441;
@@ -2090,48 +2163,41 @@ public:
 
   void setWindowSize(int w, int h) { setBounds(0, 0, w, h); }
 
-  void setParam(const std::string& name, float value) {
+  void setParam(const std::string &name, float value) {
     if (name == "volume") {
       setVolume(value);
-    }
-    else if (name == "cutoff") {
+    } else if (name == "cutoff") {
       setFilterCutoff(value);
-    }
-    else if (name == "resonance") {
+    } else if (name == "resonance") {
       setFilterResonance(value);
-    }
-    else if (name == "freq") {
-      signal_freq_ = std::clamp(value, static_cast<float>(TestSignalGenerator::kMinFrequency),
-                                static_cast<float>(TestSignalGenerator::kMaxFrequency));
+    } else if (name == "freq") {
+      signal_freq_ = std::clamp(
+          value, static_cast<float>(TestSignalGenerator::kMinFrequency),
+          static_cast<float>(TestSignalGenerator::kMaxFrequency));
       oscilloscope_.testSignal().setFrequency(signal_freq_);
-    }
-    else if (name == "detune") {
-      signal_detune_ = std::clamp(value, static_cast<float>(TestSignalGenerator::kMinDetune),
-                                  static_cast<float>(TestSignalGenerator::kMaxDetune));
+    } else if (name == "detune") {
+      signal_detune_ =
+          std::clamp(value, static_cast<float>(TestSignalGenerator::kMinDetune),
+                     static_cast<float>(TestSignalGenerator::kMaxDetune));
       oscilloscope_.testSignal().setDetune(signal_detune_);
-    }
-    else if (name == "beta") {
-      signal_beta_ = std::clamp(value, static_cast<float>(TestSignalGenerator::kMinBeta),
-                                static_cast<float>(TestSignalGenerator::kMaxBeta));
+    } else if (name == "beta") {
+      signal_beta_ =
+          std::clamp(value, static_cast<float>(TestSignalGenerator::kMinBeta),
+                     static_cast<float>(TestSignalGenerator::kMaxBeta));
       audio_player_.setBeta(signal_beta_);
-    }
-    else if (name == "exponent") {
+    } else if (name == "exponent") {
       audio_player_.setExponent(value > 1.5f ? 2 : 1);
-    }
-    else if (name == "pregain") {
+    } else if (name == "pregain") {
       pre_gain_val_ = std::clamp(value, kMinPreGain, kMaxPreGain);
       audio_player_.setPreGain(pre_gain_val_);
       pre_gain_knob_.redraw();
-    }
-    else if (name == "bloom") {
+    } else if (name == "bloom") {
       bloom_intensity_ = std::clamp(value, 0.0f, 1.25f);
       bloom_.setBloomIntensity(bloom_intensity_);
-    }
-    else if (name == "hue") {
+    } else if (name == "hue") {
       waveform_hue_ = std::clamp(value, 0.0f, 360.0f);
       oscilloscope_.setWaveformHue(waveform_hue_);
-    }
-    else if (name == "display") {
+    } else if (name == "display") {
       int m = std::clamp(static_cast<int>(value), 0, 2);
       oscilloscope_.setDisplayMode(static_cast<DisplayMode>(m));
       mode_selector_.setIndex(m);
@@ -2140,57 +2206,65 @@ public:
     redraw();
   }
 
-  void mouseDown(const visage::MouseEvent& event) override { audio_player_.play(); }
+  void mouseDown(const visage::MouseEvent &event) override {
+    audio_player_.play();
+  }
 
   bool receivesDragDropFiles() override { return true; }
 
-  void dropFiles(const std::vector<std::string>& paths) override { oscilloscope_.dropFiles(paths); }
+  void dropFiles(const std::vector<std::string> &paths) override {
+    oscilloscope_.dropFiles(paths);
+  }
 
 private:
   Oscilloscope oscilloscope_;
   ControlPanel control_panel_;
   ModeSelector mode_selector_;
-  PushButtonSwitch filter_switch_ { "On" };
-  PushButtonSwitch exponent_switch_ { "Sq" };
-  PushButtonSwitch grid_switch_ { "Grid" };
-  FilterKnob pre_gain_knob_ { "Gain" };
-  FilterKnob split_angle_knob_ { "Angle", false, false, true };  // bidirectional
-  FilterKnob split_depth_knob_ { "Depth", false, false, false };  // 0 to 1 range
-  FilterKnob post_scale_knob_ { "Scale" };
-  FilterKnob post_rotate_knob_ { "Rotate" };
-  FilterKnob volume_knob_ { "Vol" };
-  FilterKnob trigger_threshold_knob_ { "Trig", false, false, true };  // bidirectional
-  FilterSlider hue_slider_ { "Hue" };
-  FilterSlider bloom_slider_ { "Bloom" };
-  FilterKnob dynamics_knob_ { "Dyn" };
-  FilterKnob phosphor_knob_ { "Phos" };
-  FilterKnob crt_knob_ { "CRT" };
-  FilterKnob slew_knob_ { "Slew" };
-  FilterKnob step_knob_ { "Step" };
-  PushButtonSwitch beta_step_switch_ { "B" };  // Beta-Step coupling toggle
+  PushButtonSwitch filter_switch_{"On"};
+  PushButtonSwitch exponent_switch_{"Sq"};
+  PushButtonSwitch grid_switch_{"Grid"};
+  FilterKnob pre_gain_knob_{"Gain"};
+  FilterKnob split_angle_knob_{"Angle", false, false, true};  // bidirectional
+  FilterKnob split_depth_knob_{"Depth", false, false, false}; // 0 to 1 range
+  FilterKnob post_scale_knob_{"Scale"};
+  FilterKnob post_rotate_knob_{"Rotate"};
+  FilterKnob volume_knob_{"Vol"};
+  FilterKnob trigger_threshold_knob_{"Trig", false, false,
+                                     true}; // bidirectional
+  FilterSlider hue_slider_{"Hue"};
+  FilterSlider bloom_slider_{"Bloom"};
+  FilterKnob dynamics_knob_{"Dyn"};
+  FilterKnob phosphor_knob_{"Phos"};
+  FilterKnob crt_knob_{"CRT"};
+  FilterKnob slew_knob_{"Slew"};
+  FilterKnob step_knob_{"Step"};
+  PushButtonSwitch beta_step_switch_{"B"}; // Beta-Step coupling toggle
 #if VISAGE_EMSCRIPTEN
   float volume_val_ = 0.0f;
 #else
   float volume_val_ = kDefaultVolume;
 #endif
-  float saved_volume_ = 0.5f;  // Saved volume for mute/unmute toggle
+  float saved_volume_ = 0.5f; // Saved volume for mute/unmute toggle
   FilterJoystick filter_joystick_;
-  FilterKnob cutoff_knob_ { "Cutoff", true };  // logarithmic
-  FilterKnob resonance_knob_ { "Regen", false, false, false, true };  // reverse logarithmic
-  FilterKnob beta_knob_ { "Beta", false, true, true };  // bipolar logarithmic, bidirectional
-  FilterKnob freq_knob_ { "Freq", true };  // logarithmic
-  FilterKnob detune_knob_ { "Detune", false, false, true };  // linear (around 1.0), bidirectional
-  NumericDisplay freq_display_ { "Hz" };
-  NumericDisplay detune_display_ { "x" };
-  NumericDisplay cutoff_display_ { "Hz" };
-  NumericDisplay resonance_display_ { "%" };
-  NumericDisplay angle_display_ { "°" };
-  NumericDisplay depth_display_ { "" };
-  NumericDisplay beta_display_ { "" };
-  NumericDisplay pre_gain_display_ { "x" };
-  SectionFrame signal_box_ { "SIGNAL  GEN" };
-  SectionFrame filter_box_ { "FILTER" };
-  SectionFrame display_box_ { "DISPLAY" };
+  FilterKnob cutoff_knob_{"Cutoff", true}; // logarithmic
+  FilterKnob resonance_knob_{"Regen", false, false, false,
+                             true}; // reverse logarithmic
+  FilterKnob beta_knob_{"Beta", false, true,
+                        true};         // bipolar logarithmic, bidirectional
+  FilterKnob freq_knob_{"Freq", true}; // logarithmic
+  FilterKnob detune_knob_{"Detune", false, false,
+                          true}; // linear (around 1.0), bidirectional
+  NumericDisplay freq_display_{"Hz"};
+  NumericDisplay detune_display_{"x"};
+  NumericDisplay cutoff_display_{"Hz"};
+  NumericDisplay resonance_display_{"%"};
+  NumericDisplay angle_display_{"°"};
+  NumericDisplay depth_display_{""};
+  NumericDisplay beta_display_{""};
+  NumericDisplay pre_gain_display_{"x"};
+  SectionFrame signal_box_{"SIGNAL  GEN"};
+  SectionFrame filter_box_{"FILTER"};
+  SectionFrame display_box_{"DISPLAY"};
   HelpOverlay help_overlay_;
   visage::BloomPostEffect bloom_;
 
@@ -2199,30 +2273,31 @@ private:
   float bloom_intensity_ = kDefaultBloomIntensity;
   bool bloom_enabled_ = true;
   float waveform_hue_ = kDefaultWaveformHue;
-  float hue_dynamics_ = kDefaultHueDynamics;  // Velocity-based hue shift sensitivity
-  float phosphor_decay_ = kDefaultPhosphorDecay;  // Phosphor decay rate
+  float hue_dynamics_ =
+      kDefaultHueDynamics; // Velocity-based hue shift sensitivity
+  float phosphor_decay_ = kDefaultPhosphorDecay; // Phosphor decay rate
   float filter_cutoff_ = kDefaultFilterCutoff;
   float filter_resonance_ = kDefaultFilterResonance;
-  float filter_resonance_pct_ = 100.0f;  // For display (0-100%)
+  float filter_resonance_pct_ = 100.0f; // For display (0-100%)
   float signal_beta_ = kDefaultSignalBeta;
   float signal_freq_ = kDefaultSignalFreq;
   float signal_detune_ = kDefaultSignalDetune;
-  float split_angle_ = kDefaultSplitAngle;  // -180 to +180 degrees
-  float split_depth_ = kDefaultSplitDepth;  // -1 to +1
+  float split_angle_ = kDefaultSplitAngle; // -180 to +180 degrees
+  float split_depth_ = kDefaultSplitDepth; // -1 to +1
   float post_scale_val_ = kDefaultPostScale;
   float post_rotate_val_ = kDefaultPostRotate;
   float trigger_threshold_ = kDefaultTriggerThreshold;
-  float crt_intensity_ = kDefaultCrtIntensity;  // CRT effect ensemble intensity
-  float slew_ = kDefaultSlew;  // XY slew filter amount
-  float step_mult_ = kDefaultStepMult;  // Rendering step multiplier
-  bool beta_step_coupled_ = true;  // Beta-Step coupling (default on)
+  float crt_intensity_ = kDefaultCrtIntensity; // CRT effect ensemble intensity
+  float slew_ = kDefaultSlew;                  // XY slew filter amount
+  float step_mult_ = kDefaultStepMult;         // Rendering step multiplier
+  bool beta_step_coupled_ = true; // Beta-Step coupling (default on)
 
   bool shutting_down_ = false;
-  FadeOutTimer fade_out_timer_ { this, [this] { visage::closeApplication(); } };
+  FadeOutTimer fade_out_timer_{this, [this] { visage::closeApplication(); }};
 };
 
-int runExample() {
-  ExampleEditor editor;
+int runFaveworm() {
+  FavewormEditor editor;
   editor.setWindowDecoration(visage::Window::Decoration::Client);
 
 #if VISAGE_EMSCRIPTEN
@@ -2250,7 +2325,7 @@ void setVolume(float volume) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setParameter(const char* name, float value) {
+void setParameter(const char *name, float value) {
   if (g_editor && name)
     g_editor->setParam(name, value);
 }
