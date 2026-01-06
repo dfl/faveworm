@@ -108,3 +108,6 @@ cd build
 cmake ..
 cmake --build . --target Faveworm
 ```
+
+## More Cool Stuff
+See more of my audio projects at https://dfl.github.io/lowenlabs-audio/
