@@ -88,24 +88,41 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
 file(GLOB_RECURSE HEADER_FILES src/*.h)
 
 # =========================
-# Icons
+# Embed icons (for UI/WASM use)
 # =========================
-set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/faveworm.icns")
+file(GLOB_RECURSE ICONS resources/icons/*)
+add_embedded_resources(
+  EmbeddedIcons
+  "faveworm_icons.h"
+  "resources::icons"
+  "${ICONS}"
+)
+
+# =========================
+# App Bundle Icons
+# =========================
+set(APP_ICON_FILENAME "faveworm.icns")
+set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/${APP_ICON_FILENAME}")
 set(APP_ICON_WIN   "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/faveworm.ico")
 
+set(APP_RESOURCE_FILES "")
 if (APPLE)
   set_source_files_properties(
     ${APP_ICON_MACOS}
     PROPERTIES MACOSX_PACKAGE_LOCATION Resources
   )
+  list(APPEND APP_RESOURCE_FILES ${APP_ICON_MACOS})
+elseif (WIN32)
+  set(ICON_RC "${CMAKE_CURRENT_BINARY_DIR}/faveworm.rc")
+  file(WRITE "${ICON_RC}" "IDI_ICON1 ICON DISCARDABLE \"${APP_ICON_WIN}\"\n")
+  list(APPEND APP_RESOURCE_FILES ${ICON_RC})
 endif()
 
 add_executable(
   Faveworm
   ${SOURCE_FILES}
   ${HEADER_FILES}
-  ${APP_ICON_MACOS}
-  ${APP_ICON_WIN}
+  ${APP_RESOURCE_FILES}
 )
 
 target_include_directories(
@@ -127,7 +144,7 @@ elseif (APPLE)
 
   set_target_properties(Faveworm PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_ICON_FILE "faveworm.icns"
+    MACOSX_BUNDLE_ICON_FILE "${APP_ICON_FILENAME}"
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist
   )
 elseif (EMSCRIPTEN)
@@ -154,6 +171,7 @@ target_link_libraries(Faveworm PRIVATE
   visage
   EmbeddedShaders
   EmbeddedFonts
+  EmbeddedIcons
 )
 
 # =========================
