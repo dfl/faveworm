@@ -1,10 +1,24 @@
 # Faveworm Oscilloscope
 
-A love letter to the analog oscilloscopes of yore, trasnforming audio into liquid light. Inspired by the legendary work at [oscilloscopemusic.com](https://oscilloscopemusic.com).
+[![CI](https://github.com/dfl/faveworm/actions/workflows/ci.yml/badge.svg)](https://github.com/dfl/faveworm/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/dfl/faveworm)](https://github.com/dfl/faveworm/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/dfl/faveworm/total)](https://github.com/dfl/faveworm/releases)
+
+A love letter to the analog oscilloscopes of yore, transforming audio into liquid light. Inspired by the legendary work at [oscilloscopemusic.com](https://oscilloscopemusic.com).
+
+## Demo
+
+[![Watch the demo](https://img.youtube.com/vi/yX30gl02Jhc/0.jpg)](https://www.youtube.com/watch?v=yX30gl02Jhc)
+
+## Installation
+
+You can download the latest builds for macOS, Windows, and Linux from the [Releases page](https://github.com/dfl/faveworm/releases).
+
+---
 
 Built on the shoulders of giants with [Visage](https://github.com/VitalAudio/visage), Faveworm features a custom physics-based beam renderer raided from [Laurent de Soras' faveworm rendering plugin for Vapoursynth](https://ldesoras.fr/prod.html#src_vs).
 
-![XY Mode Visualization](images/screenshot.png)
+<!-- ![XY Mode Visualization](images/screenshot.png)
 
 ## Display Modes
 
@@ -52,14 +66,14 @@ Different filter combinations create entirely different visual geometries. Here 
 | **Kaleidoscope** | Bandstop | Allpass | 300-800 Hz | Psychedelic mandalas, sharp edges |
 | **Organic** | Lowpass | Bandpass | 100-200 Hz | Soft loops and folding shapes |
 | **Liquid** | Allpass | Highpass | 20-40 Hz | Vector graphics, CRT water |
-| **Complement** | Bandpass | Bandstop | 200-500 Hz | Complementary bands, "hollow" sounds |
+| **Complement** | Bandpass | Bandstop | 200-500 Hz | Complementary bands, "hollow" sounds | -->
 
 ### Test Signal Generator (XY Mode)
 
 Beta controls the oscillator waveform, at high values you will get chaos!
 Protect your ears by turning down the volume.
 
-| Key | Action |
+<!-- | Key | Action |
 |-----|--------|
 | `T` | Toggle Signal | Turn the internal noise machine on/off |
 | `[` / `]` | Frequency | Tune the base pitch |
@@ -82,20 +96,12 @@ Check the bottom-right corner. This circular pad is your unified control surface
 - **Angle**: Morphs between filter topologies (smooth crossfading!)
 - **Radius**: Filter intensity (Center = bypass/allpass, Edge = max filter character)
 - **Mouse Wheel**: Cutoff Frequency
-- **Shift + Wheel**: Resonance (Q factor) - careful, it screams!
+- **Shift + Wheel**: Resonance (Q factor) - careful, it screams! -->
 
 ## Drag & Drop
-Just drag a WAV file onto the window. We eat these formats for breakfast:
-- 16/24/32-bit PCM
-- 32-bit Float (for that extra dynamic range)
+If you drag a WAV file onto the window, it will load and loop.
 
-## Under the Hood
-- **Engine**: [Visage](https://github.com/VitalAudio/visage) (C++ UI logic)
-- **DSP**: Custom C++ library `superfreak` tailored for audio visualizers.
-- **Filters**: 360° morphing SVF implementation.
-- **Oscillators**: Anti-aliased RPM oscillators for the test signal.
-
-## Building
+## DIY build
 
 ```bash
 cd build
