@@ -14,6 +14,8 @@ A love letter to the analog oscilloscopes of yore, transforming audio into liqui
 
 You can download the latest builds for macOS, Windows, and Linux from the [Releases page](https://github.com/dfl/faveworm/releases).
 
+MacOS users: right-click and select "Open" to run the app the first time, in order to bypass "unidentified developer" warnings.
+
 ---
 
 Built on the shoulders of giants with [Visage](https://github.com/VitalAudio/visage), Faveworm features a custom physics-based beam renderer raided from [Laurent de Soras' faveworm rendering plugin for Vapoursynth](https://ldesoras.fr/prod.html#src_vs).
