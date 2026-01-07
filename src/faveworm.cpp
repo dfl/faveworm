@@ -1712,6 +1712,9 @@ public:
     bloom_slider_.setCallback([this](float v) {
       bloom_intensity_ = v;
       bloom_.setBloomIntensity(v);
+      // Actually disable the shader when at zero for GPU savings
+      setPostEffect(v > 0.01f ? &bloom_ : nullptr);
+      bloom_enabled_ = (v > 0.01f);
     });
 
     control_panel_.addScrolledChild(&dynamics_knob_);
