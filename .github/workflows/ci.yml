@@ -70,10 +70,20 @@ jobs:
           name: faveworm-macos-ci
           path: faveworm-macos-ci.zip
 
-      - name: Build (Windows)
+      - name: Setup vcpkg
         if: runner.os == 'Windows'
         run: |
-          vcpkg install portaudio:x64-windows
-          $toolchain = "$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          git clone https://github.com/microsoft/vcpkg.git C:/vcpkg
+          C:/vcpkg/bootstrap-vcpkg.bat
+          C:/vcpkg/vcpkg.exe install portaudio:x64-windows-static
+        shell: powershell
+
+      - name: Build Faveworm (Windows)
+        if: runner.os == 'Windows'
+        env:
+          VCPKG_ROOT: C:/vcpkg
+        run: |
+          $toolchain = "$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$toolchain"
           cmake --build build --config Release --parallel
+        shell: powershell

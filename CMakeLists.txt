@@ -105,23 +105,19 @@ target_include_directories(
 # =========================
 if(NOT EMSCRIPTEN)
     if(APPLE)
-        # macOS: try Homebrew-installed PortAudio first
-        find_library(PORTAUDIO_LIB_STATIC
-            NAMES portaudio_static portaudio
+        find_library(PORTAUDIO_LIB NAMES portaudio_static portaudio
             PATHS "/usr/local/lib" "/opt/homebrew/lib"
         )
-        find_path(PORTAUDIO_INCLUDE_DIR
-            NAMES portaudio.h
+        find_path(PORTAUDIO_INCLUDE NAMES portaudio.h
             PATHS "/usr/local/include" "/opt/homebrew/include"
         )
 
-        if(PORTAUDIO_LIB_STATIC AND PORTAUDIO_INCLUDE_DIR)
+        if(PORTAUDIO_LIB AND PORTAUDIO_INCLUDE)
             message(STATUS "Using Homebrew PortAudio on macOS")
-            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE_DIR})
-            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB_STATIC})
+            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE})
+            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB})
         else()
-            # Fallback to CoreAudio frameworks
-            message(STATUS "PortAudio not found, linking CoreAudio frameworks")
+            message(STATUS "PortAudio not found on macOS, linking CoreAudio frameworks")
             target_link_libraries(Faveworm PRIVATE
                 "-framework CoreAudio"
                 "-framework AudioToolbox"
@@ -129,30 +125,40 @@ if(NOT EMSCRIPTEN)
             )
         endif()
 
-    elseif(WIN32 OR UNIX)
-        # Windows / Linux: try vcpkg first
+    elseif(WIN32)
+        if(NOT DEFINED ENV{VCPKG_ROOT})
+            message(FATAL_ERROR "VCPKG_ROOT environment variable is not set; cannot locate PortAudio")
+        endif()
+
+        find_library(PORTAUDIO_LIB NAMES portaudio_static portaudio
+            PATHS "$ENV{VCPKG_ROOT}/installed/x64-windows-static/lib"
+        )
+        find_path(PORTAUDIO_INCLUDE NAMES portaudio.h
+            PATHS "$ENV{VCPKG_ROOT}/installed/x64-windows-static/include"
+        )
+
+        if(NOT PORTAUDIO_LIB OR NOT PORTAUDIO_INCLUDE)
+            message(FATAL_ERROR "Could not find PortAudio in vcpkg folder")
+        endif()
+
+        message(STATUS "Using PortAudio from vcpkg on Windows")
+        target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE})
+        target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB})
+
+    elseif(UNIX)
         find_package(PortAudio CONFIG QUIET)
         if(PortAudio_FOUND)
-            message(STATUS "Using PortAudio from vcpkg")
+            message(STATUS "Using PortAudio from vcpkg on Linux")
             target_link_libraries(Faveworm PRIVATE PortAudio::PortAudio)
         else()
-            # Fallback to manual static library detection
-            find_library(PORTAUDIO_LIB_STATIC
-                NAMES portaudio_static portaudio
-                PATHS "C:/path/to/portaudio/lib" "/usr/local/lib" "/usr/lib"
-                REQUIRED
-            )
-            find_path(PORTAUDIO_INCLUDE_DIR
-                NAMES portaudio.h
-                PATHS "C:/path/to/portaudio/include" "/usr/local/include" "/usr/include"
-                REQUIRED
-            )
-
-            message(STATUS "Using manually installed PortAudio")
-            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE_DIR})
-            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB_STATIC})
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
+            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE_DIRS})
+            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LDFLAGS})
+            message(STATUS "Using system PortAudio on Linux")
         endif()
     endif()
+
 endif()
 
 # =========================
