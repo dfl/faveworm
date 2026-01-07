@@ -1336,15 +1336,18 @@ public:
     const float half_beam = beam_size_ * 0.5f;
 
     // Per-frame budget to prevent CPU/GPU overload at pathological beta values
-    constexpr int kMaxCirclesPerFrame = 8000;
+    constexpr int kMaxCirclesPerFrame = 15000;
     int circles_drawn = 0;
 
     // Calculate step_dist ONCE per frame, not per sample
+    // Use original quadratic scaling with a minimum floor
     float step_dist;
     if (beta_step_coupled_) {
       float beta = std::abs(static_cast<float>(testSignal().beta()));
-      // Aggressive scaling (0.5) to reduce draw calls at moderate beta
-      step_dist = kMaxDist * (1.0f + 0.5f * beta * beta);
+      // Quadratic formula with higher floor (12px) to ensure full waveform
+      // renders in the chaotic 4-7 zone where Nyquist ringing creates long
+      // segments
+      step_dist = std::max(kMaxDist * (1.0f + 0.2f * beta * beta), 12.0f);
     } else {
       step_dist = kMaxDist * step_mult_;
     }
@@ -1361,7 +1364,7 @@ public:
       const float d = std::sqrt(dx * dx + dy * dy);
 
       const int n =
-          std::min(50, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
+          std::min(80, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
       const float nr = 1.0f / static_cast<float>(n);
       const float ix = dx * nr;
       const float iy = dy * nr;
