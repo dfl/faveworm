@@ -1335,7 +1335,22 @@ public:
     const int num_samples = static_cast<int>(samples.size());
     const float half_beam = beam_size_ * 0.5f;
 
-    for (int pos = 0; pos < num_samples - 1; ++pos) {
+    // Per-frame budget to prevent CPU/GPU overload at pathological beta values
+    constexpr int kMaxCirclesPerFrame = 8000;
+    int circles_drawn = 0;
+
+    // Calculate step_dist ONCE per frame, not per sample
+    float step_dist;
+    if (beta_step_coupled_) {
+      float beta = std::abs(static_cast<float>(testSignal().beta()));
+      // Aggressive scaling (0.5) to reduce draw calls at moderate beta
+      step_dist = kMaxDist * (1.0f + 0.5f * beta * beta);
+    } else {
+      step_dist = kMaxDist * step_mult_;
+    }
+
+    for (int pos = 0;
+         pos < num_samples - 1 && circles_drawn < kMaxCirclesPerFrame; ++pos) {
       Sample p1 = toPixel(samples[pos]);
       Sample p2 = toPixel(samples[pos + 1]);
 
@@ -1345,16 +1360,8 @@ public:
       const float dy = p2.y - y;
       const float d = std::sqrt(dx * dx + dy * dy);
 
-      float step_dist;
-      if (beta_step_coupled_) {
-        float beta = std::abs(static_cast<float>(testSignal().beta()));
-        step_dist = kMaxDist * (1.0f + 0.2f * beta * beta);
-      } else {
-        step_dist = kMaxDist * step_mult_;
-      }
-
-      const int n = std::min(
-          100, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
+      const int n =
+          std::min(50, std::max(static_cast<int>(std::ceil(d / step_dist)), 1));
       const float nr = 1.0f / static_cast<float>(n);
       const float ix = dx * nr;
       const float iy = dy * nr;
@@ -1374,11 +1381,12 @@ public:
           brightness * 0.9f, dynamic_hue, 0.85f, brightness);
       canvas.setColor(color);
 
-      for (int k = 0; k < end; ++k) {
+      for (int k = 0; k < end && circles_drawn < kMaxCirclesPerFrame; ++k) {
         canvas.fadeCircle(x - half_beam, y - half_beam, beam_size_,
                           beam_size_ * 0.35f);
         x += ix;
         y += iy;
+        ++circles_drawn;
       }
     }
   }
