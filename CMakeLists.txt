@@ -25,36 +25,6 @@ set(VISAGE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(visage)
 
 # =========================
-# PortAudio
-# =========================
-if (NOT EMSCRIPTEN)
-  if (APPLE)
-    # On macOS, manual search for absolute paths is the most reliable
-    find_library(PORTAUDIO_LIB portaudio REQUIRED)
-    find_path(PORTAUDIO_INCLUDE_DIR portaudio.h REQUIRED)
-
-    set(PORTAUDIO_TARGET ${PORTAUDIO_LIB})
-    set(PORTAUDIO_INCLUDES ${PORTAUDIO_INCLUDE_DIR})
-  else()
-    find_package(portaudio CONFIG QUIET)
-    if (portaudio_FOUND)
-      set(PORTAUDIO_TARGET portaudio)
-    else()
-      find_package(PortAudio QUIET)
-      if (PortAudio_FOUND)
-        set(PORTAUDIO_TARGET PortAudio::PortAudio)
-      else()
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(PORTAUDIO REQUIRED portaudio-2.0)
-        set(PORTAUDIO_TARGET ${PORTAUDIO_LDFLAGS})
-        set(PORTAUDIO_INCLUDES ${PORTAUDIO_INCLUDE_DIRS})
-      endif()
-    endif()
-  endif()
-endif()
-
-
-# =========================
 # Embed shaders
 # =========================
 file(GLOB_RECURSE SHADERS resources/shaders/[vf]s_*.sc)
@@ -114,6 +84,9 @@ elseif (WIN32)
   list(APPEND APP_RESOURCE_FILES ${ICON_RC})
 endif()
 
+# =========================
+# Executable
+# =========================
 add_executable(
   Faveworm
   ${SOURCE_FILES}
@@ -126,6 +99,61 @@ target_include_directories(
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# =========================
+# PortAudio
+# =========================
+if(NOT EMSCRIPTEN)
+    if(APPLE)
+        # macOS: try Homebrew-installed PortAudio first
+        find_library(PORTAUDIO_LIB_STATIC
+            NAMES portaudio_static portaudio
+            PATHS "/usr/local/lib" "/opt/homebrew/lib"
+        )
+        find_path(PORTAUDIO_INCLUDE_DIR
+            NAMES portaudio.h
+            PATHS "/usr/local/include" "/opt/homebrew/include"
+        )
+
+        if(PORTAUDIO_LIB_STATIC AND PORTAUDIO_INCLUDE_DIR)
+            message(STATUS "Using Homebrew PortAudio on macOS")
+            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE_DIR})
+            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB_STATIC})
+        else()
+            # Fallback to CoreAudio frameworks
+            message(STATUS "PortAudio not found, linking CoreAudio frameworks")
+            target_link_libraries(Faveworm PRIVATE
+                "-framework CoreAudio"
+                "-framework AudioToolbox"
+                "-framework CoreFoundation"
+            )
+        endif()
+
+    elseif(WIN32 OR UNIX)
+        # Windows / Linux: try vcpkg first
+        find_package(PortAudio CONFIG QUIET)
+        if(PortAudio_FOUND)
+            message(STATUS "Using PortAudio from vcpkg")
+            target_link_libraries(Faveworm PRIVATE PortAudio::PortAudio)
+        else()
+            # Fallback to manual static library detection
+            find_library(PORTAUDIO_LIB_STATIC
+                NAMES portaudio_static portaudio
+                PATHS "C:/path/to/portaudio/lib" "/usr/local/lib" "/usr/lib"
+                REQUIRED
+            )
+            find_path(PORTAUDIO_INCLUDE_DIR
+                NAMES portaudio.h
+                PATHS "C:/path/to/portaudio/include" "/usr/local/include" "/usr/include"
+                REQUIRED
+            )
+
+            message(STATUS "Using manually installed PortAudio")
+            target_include_directories(Faveworm PRIVATE ${PORTAUDIO_INCLUDE_DIR})
+            target_link_libraries(Faveworm PRIVATE ${PORTAUDIO_LIB_STATIC})
+        endif()
+    endif()
+endif()
 
 # =========================
 # Platform configuration
