@@ -482,7 +482,9 @@ public:
     if (!enabled_ || !dragging_ || !value_)
       return;
 
-    float delta = (last_y_ - event.position.y) / 100.0f;
+    // Shift key enables fine control (10x finer)
+    float sensitivity = event.isShiftDown() ? 0.1f : 1.0f;
+    float delta = sensitivity * (last_y_ - event.position.y) / 100.0f;
     last_y_ = event.position.y;
 
     if (logarithmic_) {
@@ -532,7 +534,9 @@ public:
     if (!enabled_ || !value_)
       return false;
 
-    float wheel_delta = event.wheel_delta_y * 0.05f;
+    // Shift key enables fine control (10x finer)
+    float sensitivity = event.isShiftDown() ? 0.1f : 1.0f;
+    float wheel_delta = sensitivity * event.wheel_delta_y * 0.05f;
     if (logarithmic_) {
       float log_range = std::log(max_ / min_);
       float log_delta = wheel_delta * log_range;

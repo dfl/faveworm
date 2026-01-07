@@ -1572,7 +1572,7 @@ public:
     control_panel_.addScrolledChild(&beta_display_);
     beta_display_.setValue(&signal_beta_);
     beta_display_.setColor(visage::Color(1.0f, 0.5f, 0.9f, 0.5f));
-    beta_display_.setDecimals(1);
+    beta_display_.setDecimals(2);
 
     control_panel_.addScrolledChild(&exponent_switch_);
     exponent_switch_.setValue(false); // false = 1, true = 2
