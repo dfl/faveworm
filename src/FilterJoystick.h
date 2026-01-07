@@ -537,23 +537,33 @@ public:
       float log_range = std::log(max_ / min_);
       float log_delta = wheel_delta * log_range;
       *value_ = std::clamp(*value_ * std::exp(log_delta), min_, max_);
+    } else if (bidirectional_) {
+      // For bidirectional knobs, use virtual_norm_ to accumulate wheel deltas
+      // so that accumulated movements can escape the sticky zone
+      virtual_norm_ = std::clamp(virtual_norm_ + wheel_delta, 0.0f, 1.0f);
+      float new_norm = virtual_norm_;
+
+      // Apply sticky zone remapping
+      constexpr float kStickyZone = 0.05f;
+      if (std::abs(virtual_norm_ - 0.5f) < kStickyZone) {
+        new_norm = 0.5f;
+      } else {
+        if (virtual_norm_ > 0.5f)
+          new_norm = 0.5f + (virtual_norm_ - (0.5f + kStickyZone)) *
+                                (0.5f / (0.5f - kStickyZone));
+        else
+          new_norm = virtual_norm_ / (0.5f - kStickyZone) * 0.5f;
+      }
+
+      if (bipolar_logarithmic_)
+        *value_ = denormalizeBipolarLog(new_norm);
+      else if (reverse_logarithmic_)
+        *value_ = denormalizeReverseLog(new_norm);
+      else
+        *value_ = min_ + new_norm * (max_ - min_);
     } else {
       float norm = getNormalizedValue();
       float new_norm = std::clamp(norm + wheel_delta, 0.0f, 1.0f);
-
-      if (bidirectional_) {
-        // Apply sticky zone remapping to mouse wheel as well
-        constexpr float kStickyZone = 0.05f;
-        if (std::abs(new_norm - 0.5f) < kStickyZone) {
-          new_norm = 0.5f;
-        } else {
-          if (new_norm > 0.5f)
-            new_norm = 0.5f + (new_norm - (0.5f + kStickyZone)) *
-                                  (0.5f / (0.5f - kStickyZone));
-          else
-            new_norm = new_norm / (0.5f - kStickyZone) * 0.5f;
-        }
-      }
 
       if (bipolar_logarithmic_)
         *value_ = denormalizeBipolarLog(new_norm);
