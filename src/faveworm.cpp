@@ -83,6 +83,14 @@ static constexpr float kDefaultCrtIntensity =
 static constexpr float kDefaultSlew =
     0.0f; // XY slew filter (0 = no filtering, 1 = max smoothing)
 
+// LFO for filter cutoff modulation
+static constexpr float kMinLfoFreq = 0.01f;     // 0.01 Hz minimum
+static constexpr float kMaxLfoFreq = 20.0f;     // 20 Hz maximum
+static constexpr float kDefaultLfoFreq = 0.5f;  // Default LFO frequency
+static constexpr float kMinLfoDepth = 0.0f;     // No modulation
+static constexpr float kMaxLfoDepth = 4.0f;     // 4 octaves max
+static constexpr float kDefaultLfoDepth = 0.0f; // Default: no modulation
+
 // Rendering step multiplier (1.0 = base, higher = coarser/faster rendering)
 static constexpr float kDefaultStepMult = 1.0f;
 static constexpr float kMinStepMult = 0.5f;
@@ -842,6 +850,33 @@ private:
         speaker_r = r;
 
         if (filter_enabled_) {
+          // Update LFO phase and compute modulated cutoff
+          float lfo_freq = lfo_freq_.load(std::memory_order_relaxed);
+          float lfo_depth = lfo_depth_.load(std::memory_order_relaxed);
+
+          // Advance LFO phase (2*pi per cycle)
+          constexpr double kTwoPi = 2.0 * 3.14159265358979323846;
+          double phase_inc = kTwoPi * lfo_freq / sample_rate_;
+          lfo_phase_ += phase_inc;
+          if (lfo_phase_ >= kTwoPi)
+            lfo_phase_ -= kTwoPi;
+
+          // Calculate modulated cutoff (in octaves)
+          // modulated_cutoff = base_cutoff * 2^(depth * sin(phase))
+          float base_cutoff = filter_cutoff_.load(std::memory_order_relaxed);
+          double modulated_cutoff = base_cutoff;
+          if (lfo_depth > 0.0f) {
+            double mod_factor = std::pow(2.0, lfo_depth * std::sin(lfo_phase_));
+            modulated_cutoff = base_cutoff * mod_factor;
+            modulated_cutoff = std::clamp(
+                modulated_cutoff, static_cast<double>(kMinFilterCutoff),
+                static_cast<double>(kMaxFilterCutoff));
+          }
+
+          // Apply modulated cutoff to filters
+          svf_.setCutoff(modulated_cutoff);
+          stereo_router_.setCutoff(modulated_cutoff);
+
           // Process GLOBAL filter once per sample (preserving state)
           double mono = (static_cast<double>(l) + static_cast<double>(r)) * 0.5;
           auto outputs = svf_.process(mono);
@@ -984,6 +1019,17 @@ public:
   }
   float preGain() const { return pre_gain_; }
 
+  // LFO controls for filter cutoff modulation
+  void setLfoFreq(float freq) {
+    lfo_freq_ = std::clamp(freq, kMinLfoFreq, kMaxLfoFreq);
+  }
+  float lfoFreq() const { return lfo_freq_; }
+
+  void setLfoDepth(float depth) {
+    lfo_depth_ = std::clamp(depth, kMinLfoDepth, kMaxLfoDepth);
+  }
+  float lfoDepth() const { return lfo_depth_; }
+
   bool use_speaker_ = false;
   TestSignalGenerator *test_generator_ = nullptr;
   float current_gain_ = 0.0f;
@@ -991,6 +1037,11 @@ public:
   std::atomic<bool> shutting_down_{false};
   std::atomic<float> volume_{0.0f};
   float sample_rate_ = 44100.0f;
+
+  // LFO state
+  std::atomic<float> lfo_freq_{kDefaultLfoFreq};
+  std::atomic<float> lfo_depth_{kDefaultLfoDepth};
+  double lfo_phase_ = 0.0; // Phase accumulator (0 to 2*pi)
 };
 
 class Oscilloscope : public visage::Frame {
@@ -1124,6 +1175,22 @@ public:
   }
   bool filterEnabled() const {
     return audio_player_ ? audio_player_->filterEnabled() : false;
+  }
+
+  // LFO controls
+  void setLfoFreq(float freq) {
+    if (audio_player_)
+      audio_player_->setLfoFreq(freq);
+  }
+  float lfoFreq() const {
+    return audio_player_ ? audio_player_->lfoFreq() : kDefaultLfoFreq;
+  }
+  void setLfoDepth(float depth) {
+    if (audio_player_)
+      audio_player_->setLfoDepth(depth);
+  }
+  float lfoDepth() const {
+    return audio_player_ ? audio_player_->lfoDepth() : kDefaultLfoDepth;
   }
 
   void step() {
@@ -1685,6 +1752,34 @@ public:
     depth_display_.setColor(visage::Color(1.0f, 0.3f, 0.7f, 0.9f));
     depth_display_.setDecimals(2);
 
+    // LFO controls for filter cutoff modulation
+    control_panel_.addScrolledChild(&lfo_label_);
+    lfo_label_.setColor(visage::Color(1.0f, 0.6f, 0.9f, 0.7f));
+
+    control_panel_.addScrolledChild(&lfo_freq_knob_);
+    lfo_freq_knob_.setValue(&lfo_freq_);
+    lfo_freq_knob_.setRange(kMinLfoFreq, kMaxLfoFreq);
+    lfo_freq_knob_.setColor(visage::Color(1.0f, 0.6f, 0.9f, 0.7f));
+    lfo_freq_knob_.setCallback(
+        [this](float v) { oscilloscope_.setLfoFreq(v); });
+
+    control_panel_.addScrolledChild(&lfo_freq_display_);
+    lfo_freq_display_.setValue(&lfo_freq_);
+    lfo_freq_display_.setColor(visage::Color(1.0f, 0.6f, 0.9f, 0.7f));
+    lfo_freq_display_.setDecimals(2);
+
+    control_panel_.addScrolledChild(&lfo_depth_knob_);
+    lfo_depth_knob_.setValue(&lfo_depth_);
+    lfo_depth_knob_.setRange(kMinLfoDepth, kMaxLfoDepth);
+    lfo_depth_knob_.setColor(visage::Color(1.0f, 0.6f, 0.9f, 0.7f));
+    lfo_depth_knob_.setCallback(
+        [this](float v) { oscilloscope_.setLfoDepth(v); });
+
+    control_panel_.addScrolledChild(&lfo_depth_display_);
+    lfo_depth_display_.setValue(&lfo_depth_);
+    lfo_depth_display_.setColor(visage::Color(1.0f, 0.6f, 0.9f, 0.7f));
+    lfo_depth_display_.setDecimals(1);
+
     control_panel_.addScrolledChild(&post_scale_knob_);
     post_scale_knob_.setValue(&post_scale_val_);
     post_scale_knob_.setRange(kMinPostScale, kMaxPostScale);
@@ -1838,6 +1933,11 @@ public:
     split_depth_knob_.setVisible(is_xy);
     angle_display_.setVisible(is_xy);
     depth_display_.setVisible(is_xy);
+    lfo_label_.setVisible(is_xy);
+    lfo_freq_knob_.setVisible(is_xy);
+    lfo_depth_knob_.setVisible(is_xy);
+    lfo_freq_display_.setVisible(is_xy);
+    lfo_depth_display_.setVisible(is_xy);
     filter_switch_.setVisible(is_xy);
     post_scale_knob_.setVisible(is_xy);
     post_rotate_knob_.setVisible(is_xy);
@@ -1869,6 +1969,11 @@ public:
     split_depth_knob_.setEnabled(enabled);
     angle_display_.setEnabled(enabled);
     depth_display_.setEnabled(enabled);
+    lfo_label_.setEnabled(enabled);
+    lfo_freq_knob_.setEnabled(enabled);
+    lfo_depth_knob_.setEnabled(enabled);
+    lfo_freq_display_.setEnabled(enabled);
+    lfo_depth_display_.setEnabled(enabled);
   }
 
   void resized() override {
@@ -1971,6 +2076,19 @@ public:
       y += small_knob + 2;
       angle_display_.setBounds(left_f_x, y, small_knob, small_display_h);
       depth_display_.setBounds(right_f_x, y, small_knob, small_display_h);
+      y += small_display_h + 8;
+
+      // LFO label centered above the knobs
+      int lfo_label_w = panel_width - 20;
+      lfo_label_.setBounds(10, y, lfo_label_w, 14);
+      y += 16;
+
+      // LFO Rate and Depth (octaves)
+      lfo_freq_knob_.setBounds(left_f_x, y, small_knob, small_knob);
+      lfo_depth_knob_.setBounds(right_f_x, y, small_knob, small_knob);
+      y += small_knob + 2;
+      lfo_freq_display_.setBounds(left_f_x, y, small_knob, small_display_h);
+      lfo_depth_display_.setBounds(right_f_x, y, small_knob, small_display_h);
       y += small_display_h + 10;
 
       filter_box_.setBounds(5, filter_start_y, panel_width - 10,
@@ -2267,7 +2385,9 @@ private:
                         true};         // bipolar logarithmic, bidirectional
   FilterKnob freq_knob_{"Freq", true}; // logarithmic
   FilterKnob detune_knob_{"Detune", false, false,
-                          true}; // linear (around 1.0), bidirectional
+                          true};           // linear (around 1.0), bidirectional
+  FilterKnob lfo_freq_knob_{"Rate", true}; // logarithmic for LFO frequency
+  FilterKnob lfo_depth_knob_{"Oct"};       // linear for LFO depth in octaves
   NumericDisplay freq_display_{"Hz"};
   NumericDisplay detune_display_{"x"};
   NumericDisplay cutoff_display_{"Hz"};
@@ -2276,6 +2396,9 @@ private:
   NumericDisplay depth_display_{""};
   NumericDisplay beta_display_{""};
   NumericDisplay pre_gain_display_{"x"};
+  NumericDisplay lfo_freq_display_{"Hz"};
+  NumericDisplay lfo_depth_display_{"oct"};
+  SectionLabel lfo_label_{"LFO"};
   SectionFrame signal_box_{"SIGNAL  GEN"};
   SectionFrame filter_box_{"FILTER"};
   SectionFrame display_box_{"DISPLAY"};
@@ -2304,6 +2427,8 @@ private:
   float crt_intensity_ = kDefaultCrtIntensity; // CRT effect ensemble intensity
   float slew_ = kDefaultSlew;                  // XY slew filter amount
   float step_mult_ = kDefaultStepMult;         // Rendering step multiplier
+  float lfo_freq_ = kDefaultLfoFreq;           // LFO frequency (Hz)
+  float lfo_depth_ = kDefaultLfoDepth;         // LFO depth (octaves)
   bool beta_step_coupled_ = true; // Beta-Step coupling (default on)
 
   bool shutting_down_ = false;

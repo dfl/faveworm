@@ -856,6 +856,40 @@ private:
   bool enabled_ = true;
 };
 
+// Simple inline section label for sub-sections
+class SectionLabel : public visage::Frame {
+public:
+  SectionLabel(const char *text = "") : text_(text) {}
+
+  void setText(const char *text) { text_ = text; }
+  void setColor(visage::Color c) { color_ = c; }
+  void setEnabled(bool e) { enabled_ = e; }
+
+  void draw(visage::Canvas &canvas) override {
+    const float w = static_cast<float>(width());
+    const float h = static_cast<float>(height());
+    const float dim = enabled_ ? 1.0f : 0.3f;
+
+    // Separator line at top
+    canvas.setColor(
+        visage::Color(0.3f * dim, color_.red(), color_.green(), color_.blue()));
+    canvas.fill(0, 0, w, 1);
+
+    // Label text below the line
+    visage::Font font(10, resources::fonts::DroidSansMono_ttf, dpiScale());
+    canvas.setColor(
+        visage::Color(0.8f * dim, color_.red(), color_.green(), color_.blue()));
+    canvas.text(text_, font, visage::Font::kCenter, 0, 2, w, h - 2);
+
+    redraw();
+  }
+
+private:
+  const char *text_;
+  visage::Color color_{1.0f, 0.6f, 0.9f, 0.7f};
+  bool enabled_ = true;
+};
+
 // Visual Joystick Control for Filter Morphing
 class FilterJoystick : public visage::Frame {
 public:
