@@ -57,18 +57,18 @@ jobs:
           fi
           cmake --build build --config Release --parallel
 
-      - name: Package (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          cd build
-          zip -r ../faveworm-macos-ci.zip Faveworm.app
+      # - name: Package (macOS)
+      #   if: runner.os == 'macOS'
+      #   run: |
+      #     cd build
+      #     zip -r ../faveworm-macos-ci.zip Faveworm.app
 
-      - name: Upload artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: faveworm-macos-ci
-          path: faveworm-macos-ci.zip
+      # - name: Upload artifact
+      #   if: runner.os == 'macOS'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: faveworm-macos-ci
+      #     path: faveworm-macos-ci.zip
 
       - name: Setup vcpkg
         if: runner.os == 'Windows'
